@@ -9,6 +9,8 @@
 #if defined(USE_NIMBLE)
 
 #include "NimBLECharacteristic.h"
+#include "NimBLEAdvertising.h"
+#include "NimBLEServer.h"
 #include "NimBLEHIDDevice.h"
 
 #define BLEDevice                  NimBLEDevice
@@ -201,11 +203,11 @@ public:
   void set_version(uint16_t version);
 protected:
   virtual void onStarted(BLEServer *pServer) { };
-  virtual void onConnect(BLEServer* pServer) override;
-  virtual void onDisconnect(BLEServer* pServer) override;
+  virtual void onConnect(BLEServer* pServer);
+  virtual void onDisconnect(BLEServer* pServer);
   virtual void onAuthenticationComplete(ble_gap_conn_desc* desc);
-  virtual void onWrite(BLECharacteristic* me) override;
-  virtual void onSubscribe(NimBLECharacteristic* pCharacteristic, ble_gap_conn_desc* desc, uint16_t subValue) override;
+  virtual void onWrite(BLECharacteristic* me);
+  virtual void onSubscribe(NimBLECharacteristic* pCharacteristic, ble_gap_conn_desc* desc, uint16_t subValue);
 
 };
 

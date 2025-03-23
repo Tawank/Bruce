@@ -110,18 +110,18 @@ void BleKeyboard::begin(const uint8_t *layout)
   pServer->setCallbacks(this);
 
   hid = new BLEHIDDevice(pServer);
-  inputKeyboard = hid->inputReport(KEYBOARD_ID);  // <-- input REPORTID from report map
-  outputKeyboard = hid->outputReport(KEYBOARD_ID);
-  inputMediaKeys = hid->inputReport(MEDIA_KEYS_ID);
+  inputKeyboard = hid->getInputReport(KEYBOARD_ID);  // <-- input REPORTID from report map
+  outputKeyboard = hid->getOutputReport(KEYBOARD_ID);
+  inputMediaKeys = hid->getInputReport(MEDIA_KEYS_ID);
 
   inputKeyboard->setCallbacks(this);
   outputKeyboard->setCallbacks(this);
   inputMediaKeys->setCallbacks(this);
 
-  hid->manufacturer()->setValue(deviceManufacturer);
+  hid->setManufacturer(deviceManufacturer.c_str());
 
-  hid->pnp(0x02, vid, pid, version);
-  hid->hidInfo(0x00, 0x01);
+  hid->setPnp(0x02, vid, pid, version);
+  hid->setHidInfo(0x00, 0x01);
 
 
 #if defined(USE_NIMBLE)
@@ -135,7 +135,7 @@ void BleKeyboard::begin(const uint8_t *layout)
 
 #endif // USE_NIMBLE
 
-  hid->reportMap((uint8_t*)_hidReportDescriptor, sizeof(_hidReportDescriptor));
+  hid->setReportMap((uint8_t*)_hidReportDescriptor, sizeof(_hidReportDescriptor));
   hid->startServices();
 
   onStarted(pServer);
@@ -144,7 +144,7 @@ void BleKeyboard::begin(const uint8_t *layout)
   advertising->setAppearance(HID_KEYBOARD);
   NimBLEUUID uuid((uint32_t)(ESP.getEfuseMac() & 0xFFFFF));
   advertising->addServiceUUID(uuid); // ljkjlkhn.
-  advertising->setScanResponse(false);
+  advertising->enableScanResponse(false);
   advertising->start();
   hid->setBatteryLevel(batteryLevel);
 
@@ -202,9 +202,7 @@ void BleKeyboard::set_version(uint16_t version) {
 
 void BleKeyboard::sendReport(KeyReport* keys)
 {
-  //if (this->isConnected())
-  if (this->isConnected() && this->inputKeyboard->getSubscribedCount() > 0)
-  {
+  if (this->isConnected()) {
     this->inputKeyboard->setValue((uint8_t*)keys, sizeof(KeyReport));
     this->inputKeyboard->notify();
 #if defined(USE_NIMBLE)
@@ -216,9 +214,7 @@ void BleKeyboard::sendReport(KeyReport* keys)
 
 void BleKeyboard::sendReport(MediaKeyReport* keys)
 {
-  //if (this->isConnected())
-  if (this->isConnected() && this->inputKeyboard->getSubscribedCount() > 0)
-  {
+  if (this->isConnected()) {
     this->inputMediaKeys->setValue((uint8_t*)keys, sizeof(MediaKeyReport));
     this->inputMediaKeys->notify();
 #if defined(USE_NIMBLE)

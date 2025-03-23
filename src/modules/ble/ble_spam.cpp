@@ -363,7 +363,7 @@ BLEAdvertisementData GetUniversalAdvertisementData(EBLEPayloadType Type) {
     case Microsoft: {
 
       const char* Name = generateRandomName();
-      uint8_t name_len = strlen(Name);
+      size_t name_len = strlen(Name);
       AdvData_Raw = new uint8_t[7 + name_len];
       AdvData_Raw[i++] = 6 + name_len;
       AdvData_Raw[i++] = 0xFF;
@@ -375,17 +375,17 @@ BLEAdvertisementData GetUniversalAdvertisementData(EBLEPayloadType Type) {
       memcpy(&AdvData_Raw[i], Name, name_len);
       i += name_len;
 
-      AdvData.addData(std::string((char *)AdvData_Raw, 7 + name_len));
+      AdvData.addData(AdvData_Raw, name_len + 7);
       break;
     }
     case Apple: {
       int rand = random(3);
       if(rand==0) {
         uint8_t packet[31] = {0x1e, 0xff, 0x4c, 0x00, 0x07, 0x19, 0x07, IOS1[random() % sizeof(IOS1)], 0x20, 0x75, 0xaa, 0x30, 0x01, 0x00, 0x00, 0x45, 0x12, 0x12, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-        AdvData.addData(std::string((char *)packet, 31));
+        AdvData.addData(packet, 31);
       } else if(rand==1) {
         uint8_t packet[23] = {0x16, 0xff, 0x4c, 0x00, 0x04, 0x04, 0x2a, 0x00, 0x00, 0x00, 0x0f, 0x05, 0xc1, IOS2[random() % sizeof(IOS2)], 0x60, 0x4c, 0x95, 0x00, 0x00, 0x10, 0x00, 0x00, 0x00};
-        AdvData.addData(std::string((char *)packet, 23));
+        AdvData.addData(packet, 23);
       } else {
         uint8_t packet[17];
         uint8_t i = 0;
@@ -404,7 +404,7 @@ BLEAdvertisementData GetUniversalAdvertisementData(EBLEPayloadType Type) {
         packet[i++] = 0x00; // ???
         packet[i++] = 0x10; // Type ???
         esp_fill_random(&packet[i], 3);
-        AdvData.addData(std::string((char *)packet, 17));
+        AdvData.addData(packet, 17);
       }
 
       break;
@@ -413,7 +413,7 @@ BLEAdvertisementData GetUniversalAdvertisementData(EBLEPayloadType Type) {
 
       uint8_t model = watch_models[random(26)].value;
       uint8_t Samsung_Data[15] = { 0x0F, 0xFF, 0x75, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x01, 0xFF, 0x00, 0x00, 0x43, (uint8_t)((model >> 0x00) & 0xFF) };
-      AdvData.addData(std::string((char *)Samsung_Data, 15));
+      AdvData.addData(Samsung_Data, 15);
 
       break;
     }
@@ -423,7 +423,7 @@ BLEAdvertisementData GetUniversalAdvertisementData(EBLEPayloadType Type) {
         0x03, 0x03, 0x2C, 0xFE, //First 3 data to announce Fast Pair
         0x06, 0x16, 0x2C, 0xFE, (uint8_t)((model >> 0x10) & 0xFF), (uint8_t)((model >> 0x08) & 0xFF), (uint8_t)((model >> 0x00) & 0xFF), // 6 more data to inform FastPair and device data
         0x02, 0x0A, (uint8_t)((rand() % 120) - 100) }; // 2 more data to inform RSSI data.
-      AdvData.addData(std::string((char *)Google_Data, 14));
+      AdvData.addData(Google_Data, 14);
       break;
     }
     default: {
