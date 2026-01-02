@@ -1,21 +1,55 @@
 #if !defined(LITE_VERSION) && !defined(DISABLE_INTERPRETER)
 #include "interpreter.h"
 
-#include <duktape.h>
+static JSValue js_print(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+    int i;
+    JSValue v;
+
+    for (i = 0; i < argc; i++) {
+        if (i != 0) putchar(' ');
+        v = argv[i];
+        if (JS_IsString(ctx, v)) {
+            JSCStringBuf buf;
+            const char *str;
+            size_t len;
+            str = JS_ToCStringLen(ctx, &len, v, &buf);
+            fwrite(str, 1, len, stdout);
+        } else {
+            JS_PrintValueF(ctx, argv[i], JS_DUMP_LONG);
+        }
+    }
+    putchar('\n');
+    return JS_UNDEFINED;
+}
+
+static JSValue js_date_now(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return JS_NewInt64(ctx, (int64_t)tv.tv_sec * 1000 + (tv.tv_usec / 1000));
+}
+
+static JSValue js_performance_now(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return JS_NewInt64(ctx, (tv.tv_sec * 1000LL + (tv.tv_usec / 1000LL)));
+}
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "mqjs_stdlib.h"
+#ifdef __cplusplus
+}
+#endif
 
 char *script = NULL;
 char *scriptDirpath = NULL;
 char *scriptName = NULL;
 
-// #define DUK_USE_DEBUG
-// #define DUK_USE_DEBUG_LEVEL 2
-// #define DUK_USE_DEBUG_WRITE
-
-// Code interpreter, must be called in the loop() function to work
 void interpreterHandler(void *pvParameters) {
     Serial.printf(
-        "init interpreter:\nPSRAM: [Free: %d, max alloc: %d],\nRAM: [Free: %d, "
-        "max alloc: %d]\n",
+        "init interpreter:\nPSRAM: [Free: %lu, max alloc: %lu],\nRAM: [Free: %lu, "
+        "max alloc: %lu]\n",
         ESP.getFreePsram(),
         ESP.getMaxAllocPsram(),
         ESP.getFreeHeap(),
@@ -28,20 +62,12 @@ void interpreterHandler(void *pvParameters) {
     tft.setTextColor(TFT_WHITE);
     // Create context.
     Serial.println("Create context");
-    auto alloc_function = &ps_alloc_function;
-    auto realloc_function = &ps_realloc_function;
-    auto free_function = &ps_free_function;
-    if (!psramFound()) {
-        alloc_function = NULL;
-        realloc_function = NULL;
-        free_function = NULL;
-    }
 
-    /// TODO: Add DUK_USE_NATIVE_STACK_CHECK check with
-    /// uxTaskGetStackHighWaterMark
-    duk_context *ctx =
-        duk_create_heap(alloc_function, realloc_function, free_function, NULL, js_fatal_error_handler);
+    size_t mem_size = 65536;
+    uint8_t *mem_buf = (uint8_t *)malloc(mem_size);
+    JSContext *ctx = JS_NewContext(mem_buf, mem_size, &js_stdlib);
 
+    /*
     // Init containers
     clearDisplayModuleData();
 
@@ -59,6 +85,7 @@ void interpreterHandler(void *pvParameters) {
     bduk_register_c_lightfunc(ctx, "load", native_load, 1);
     registerGlobals(ctx);
     registerMath(ctx);
+    */
 
     // registerAudio(ctx);
     // registerBadUSB(ctx);
@@ -77,89 +104,40 @@ void interpreterHandler(void *pvParameters) {
     // registerWiFi(ctx);
 
     Serial.printf(
-        "global populated:\nPSRAM: [Free: %d, max alloc: %d],\nRAM: [Free: %d, "
-        "max alloc: %d]\n",
+        "global populated:\nPSRAM: [Free: %lu, max alloc: %lu],\nRAM: [Free: %lu, "
+        "max alloc: %lu]\n",
         ESP.getFreePsram(),
         ESP.getMaxAllocPsram(),
         ESP.getFreeHeap(),
         ESP.getMaxAllocHeap()
     );
 
-    // TODO: match flipper syntax
-    // https://github.com/jamisonderek/flipper-zero-tutorials/wiki/JavaScript
-    // MEMO: API https://duktape.org/api.html
-    // https://github.com/joeqread/arduino-duktape/blob/main/src/duktape.h
+    size_t scriptSize = strlen(script);
+    Serial.printf("Script length: %zu\n", scriptSize);
 
-    Serial.printf("Script length: %d\n", strlen(script));
+    JSValue val = JS_Eval(ctx, (const char *)script, scriptSize, scriptName, 0);
 
-    if (duk_peval_string(ctx, script) != DUK_EXEC_SUCCESS) {
-        tft.fillScreen(bruceConfig.bgColor);
-        tft.setTextSize(FM);
-        tft.setTextColor(TFT_RED, bruceConfig.bgColor);
-        tft.drawCentreString("Error", tftWidth / 2, 10, 1);
-        tft.setTextColor(TFT_WHITE, bruceConfig.bgColor);
-        tft.setTextSize(FP);
-        tft.setCursor(0, 33);
-
-        String errorMessage = "";
-        if (duk_is_error(ctx, -1)) {
-            errorMessage = duk_safe_to_stacktrace(ctx, -1);
-        } else {
-            errorMessage = duk_safe_to_string(ctx, -1);
-        }
-        Serial.printf("eval failed: %s\n", errorMessage.c_str());
-        tft.printf("%s\n\n", errorMessage.c_str());
-
-        int lineIndexOf = errorMessage.indexOf("line ");
-        int evalIndexOf = errorMessage.indexOf("(eval:");
-        Serial.printf("lineIndexOf: %d\n", lineIndexOf);
-        Serial.printf("evalIndexOf: %d\n", evalIndexOf);
-        String errorLine = "";
-        if (lineIndexOf != -1) {
-            lineIndexOf += 5;
-            errorLine = errorMessage.substring(lineIndexOf, errorMessage.indexOf("\n", lineIndexOf));
-        } else if (evalIndexOf != -1) {
-            evalIndexOf += 6;
-            errorLine = errorMessage.substring(evalIndexOf, errorMessage.indexOf(")", evalIndexOf));
-        }
-        Serial.printf("errorLine: [%s]\n", errorLine.c_str());
-
-        if (errorLine != "") {
-            uint8_t errorLineNumber = errorLine.toInt();
-            const char *errorScript = nth_strchr(script, '\n', errorLineNumber - 1);
-            Serial.printf("%.80s\n\n", errorScript);
-            tft.printf("%.80s\n\n", errorScript);
-
-            if (strstr(errorScript, "let ")) {
-                Serial.println("let is not supported, change it to var");
-                tft.println("let is not supported, change it to var");
-            }
-        }
-
-        delay(500);
-        while (!check(AnyKeyPress)) { vTaskDelay(50 / portTICK_PERIOD_MS); }
-    } else {
-        duk_uint_t resultType = duk_get_type_mask(ctx, -1);
-        if (resultType & (DUK_TYPE_MASK_STRING | DUK_TYPE_MASK_NUMBER)) {
-            printf("Script ran succesfully, result is: %s\n", duk_safe_to_string(ctx, -1));
-        } else {
-            printf("Script ran succesfully");
-        }
-    }
     free((char *)script);
     script = NULL;
     free((char *)scriptDirpath);
     scriptDirpath = NULL;
     free((char *)scriptName);
     scriptName = NULL;
-    duk_pop(ctx);
+
+    if (JS_IsException(val)) {
+        JSValue obj;
+        obj = JS_GetException(ctx);
+        JS_PrintValueF(ctx, obj, JS_DUMP_LONG);
+        printf("\n");
+        exit(1);
+    }
+
+    JS_FreeContext(ctx);
+    free(mem_buf);
 
     // Clean up.
-    duk_destroy_heap(ctx);
+    // clearDisplayModuleData();
 
-    clearDisplayModuleData();
-
-    // delay(1000);
     interpreter_start = false;
     vTaskDelete(NULL);
     return;
@@ -222,25 +200,6 @@ const char *nth_strchr(const char *s, char c, int8_t n) {
     return nth;
 }
 
-void *ps_alloc_function(void *udata, duk_size_t size) {
-    void *res;
-    DUK_UNREF(udata);
-    res = ps_malloc(size);
-    return res;
-}
-
-void *ps_realloc_function(void *udata, void *ptr, duk_size_t newsize) {
-    void *res;
-    DUK_UNREF(udata);
-    res = ps_realloc(ptr, newsize);
-    return res;
-}
-
-void ps_free_function(void *udata, void *ptr) {
-    DUK_UNREF(udata);
-    DUK_ANSI_FREE(ptr);
-}
-
 void js_fatal_error_handler(void *udata, const char *msg) {
     (void)udata;
     tft.setTextSize(FM);
@@ -269,6 +228,7 @@ duk_ret_t native_exit(duk_context *ctx) {
 }
 */
 
+/*
 duk_ret_t native_require(duk_context *ctx) {
     duk_idx_t obj_idx = duk_push_object(ctx);
 
@@ -340,24 +300,6 @@ duk_ret_t native_require(duk_context *ctx) {
 
     return 1;
 }
-
-duk_ret_t native_assert(duk_context *ctx) {
-    if (duk_get_boolean_default(ctx, 0, false)) {
-        duk_push_boolean(ctx, true);
-        return 1;
-    }
-    return duk_error(ctx, DUK_ERR_ERROR, "Assertion failed: %s", duk_get_string_default(ctx, 1, "assert"));
-}
-
-// Deprecated
-duk_ret_t native_load(duk_context *ctx) {
-    free((char *)script);
-    free((char *)scriptDirpath);
-    free((char *)scriptName);
-    script = strdup(duk_to_string(ctx, 0));
-    scriptDirpath = NULL;
-    scriptName = NULL;
-    return 0;
-}
+*/
 
 #endif

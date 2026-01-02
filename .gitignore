@@ -14,3 +14,4 @@ include/current_year.h
 checksum.sha256
 /*.bin
 .vscode/extensions.json
+mqjs_build
