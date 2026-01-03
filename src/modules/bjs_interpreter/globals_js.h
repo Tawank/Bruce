@@ -7,13 +7,24 @@
 extern "C" {
 JSValue js_gc(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
 JSValue js_load(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
+
 JSValue js_setTimeout(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
 JSValue js_clearTimeout(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
+void run_timers(JSContext *ctx);
 
 JSValue js_print(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
 JSValue js_date_now(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
 JSValue js_performance_now(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
 JSValue js_require(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
+
+JSValue native_now(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
+JSValue native_delay(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
+JSValue native_random(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
+JSValue native_parse_int(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
+JSValue native_to_string(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
+JSValue native_to_hex_string(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
+JSValue native_to_lower_case(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
+JSValue native_to_upper_case(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
 }
 
 #endif

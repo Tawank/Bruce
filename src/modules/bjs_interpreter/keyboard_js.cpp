@@ -5,7 +5,6 @@
 
 #include "helpers_js.h"
 
-extern "C" {
 JSValue native_keyboard(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
     String result = "";
     if (argc == 0) {
@@ -109,7 +108,6 @@ JSValue native_getKeysPressed(JSContext *ctx, JSValue *this_val, int argc, JSVal
     }
 #endif
     return arr;
-}
 }
 
 #endif

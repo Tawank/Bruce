@@ -1,7 +1,6 @@
 #if !defined(LITE_VERSION) && !defined(DISABLE_INTERPRETER)
 #include "audio_js.h"
 
-extern "C" {
 JSValue native_playAudioFile(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
     if (argc < 1) { return JS_NewBool(false); }
 
@@ -33,7 +32,6 @@ JSValue native_tone(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) 
 #endif
 
     return JS_UNDEFINED;
-}
 }
 
 #endif

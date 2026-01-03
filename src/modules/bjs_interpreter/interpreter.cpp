@@ -3,13 +3,9 @@
 
 static void js_log_func(void *opaque, const void *buf, size_t buf_len) { fwrite(buf, 1, buf_len, stdout); }
 
-#ifdef __cplusplus
 extern "C" {
-#endif
 #include "mqjs_stdlib.h"
-#ifdef __cplusplus
 }
-#endif
 
 char *script = NULL;
 char *scriptDirpath = NULL;
@@ -42,38 +38,7 @@ void interpreterHandler(void *pvParameters) {
     /*
     // Init containers
     clearDisplayModuleData();
-
-    registerConsole(ctx);
-
-    // Typescript emits: Object.defineProperty(exports, "__esModule", { value:
-    // true }); In every file, this is polyfill so typescript project can run on
-    // Bruce
-    duk_push_object(ctx);
-    duk_put_global_string(ctx, "exports");
-
-    bduk_register_c_lightfunc(ctx, "require", native_require, 1);
-    bduk_register_c_lightfunc(ctx, "assert", native_assert, 2);
-    // Deprecated
-    bduk_register_c_lightfunc(ctx, "load", native_load, 1);
-    registerGlobals(ctx);
-    registerMath(ctx);
     */
-
-    // registerAudio(ctx);
-    // registerBadUSB(ctx);
-    // TODO: BLE UART API js wrapper https://github.com/pr3y/Bruce/pull/1133
-    // registerDevice(ctx);
-    // registerDialog(ctx);
-    // registerDisplay(ctx);
-    // registerGPIO(ctx);
-    // registerI2C(ctx);
-    // registerIR(ctx);
-    // registerKeyboard(ctx);
-    // registerNotification(ctx);
-    // registerSerial(ctx);
-    // registerStorage(ctx);
-    // registerSubGHz(ctx);
-    // registerWiFi(ctx);
 
     Serial.printf(
         "global populated:\nPSRAM: [Free: %lu, max alloc: %lu],\nRAM: [Free: %lu, "
@@ -89,6 +54,8 @@ void interpreterHandler(void *pvParameters) {
 
     JSValue val = JS_Eval(ctx, (const char *)script, scriptSize, scriptName, 0);
 
+    run_timers(ctx);
+
     free((char *)script);
     script = NULL;
     free((char *)scriptDirpath);
@@ -96,11 +63,7 @@ void interpreterHandler(void *pvParameters) {
     free((char *)scriptName);
     scriptName = NULL;
 
-    if (JS_IsException(val)) {
-        JSValue obj;
-        obj = JS_GetException(ctx);
-        JS_PrintValueF(ctx, obj, JS_DUMP_LONG);
-    }
+    if (JS_IsException(val)) { js_fatal_error_handler(ctx); }
 
     JS_FreeContext(ctx);
     free(mem_buf);

@@ -3,7 +3,6 @@
 
 #include "helpers_js.h"
 
-extern "C" {
 JSValue native_notifyBlink(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
     uint32_t delayMs = 500;
 
@@ -26,7 +25,6 @@ JSValue native_notifyBlink(JSContext *ctx, JSValue *this_val, int argc, JSValue 
     digitalWrite(19, LOW);
 
     return JS_UNDEFINED;
-}
 }
 
 #endif

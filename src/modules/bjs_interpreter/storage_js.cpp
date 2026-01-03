@@ -5,20 +5,6 @@
 
 #include "helpers_js.h"
 
-JSValue putPropStorageFunctions(JSContext *ctx, JSValue obj_idx, int magic) {
-    (void)ctx;
-    (void)obj_idx;
-    (void)magic;
-    // registration is handled via mqjs_stdlib registration; keep stub for compatibility
-    return JS_UNDEFINED;
-}
-
-JSValue registerStorage(JSContext *ctx) {
-    (void)ctx;
-    // registration happens in mqjs_stdlib.c
-    return JS_UNDEFINED;
-}
-
 JSValue native_storageReaddir(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
     (void)this_val;
     (void)argc;

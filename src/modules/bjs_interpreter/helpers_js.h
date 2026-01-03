@@ -3,15 +3,17 @@
 #if !defined(LITE_VERSION) && !defined(DISABLE_INTERPRETER)
 #include "core/serialcmds.h"
 #include <FS.h>
-#ifdef __cplusplus
+
 extern "C" {
-#endif
 #include <mquickjs.h>
-#ifdef __cplusplus
 }
-#endif
+
 #include <globals.h>
 #include <string.h>
+
+extern "C" {
+void js_fatal_error_handler(JSContext *ctx);
+}
 
 struct FileParamsJS {
     FS *fs;

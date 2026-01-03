@@ -1,7 +1,7 @@
 #if !defined(LITE_VERSION) && !defined(DISABLE_INTERPRETER)
 #include "globals_js.h"
+#include <chrono>
 
-extern "C" {
 JSValue js_gc(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
     JS_GC(ctx);
     return JS_UNDEFINED;
@@ -10,8 +10,8 @@ JSValue js_gc(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
 JSValue js_load(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
     const char *filename;
     JSCStringBuf buf_str;
-    uint8_t *buf;
-    int buf_len;
+    uint8_t *buf = NULL;
+    int buf_len = 0;
     JSValue ret;
 
     filename = JS_ToCString(ctx, argv[0], &buf_str);
@@ -71,8 +71,8 @@ JSValue js_clearTimeout(JSContext *ctx, JSValue *this_val, int argc, JSValue *ar
     return JS_UNDEFINED;
 }
 
-static void run_timers(JSContext *ctx) {
-    int64_t min_delay, delay, cur_time;
+void run_timers(JSContext *ctx) {
+    int64_t min_delay, delayMs, cur_time;
     bool has_timer;
     int i;
     JSTimer *th;
@@ -86,8 +86,8 @@ static void run_timers(JSContext *ctx) {
             th = &js_timer_list[i];
             if (th->allocated) {
                 has_timer = true;
-                delay = th->timeout - cur_time;
-                if (delay <= 0) {
+                delayMs = th->timeout - cur_time;
+                if (delayMs <= 0) {
                     JSValue ret;
                     /* the timer expired */
                     if (JS_StackCheck(ctx, 2)) goto fail;
@@ -101,23 +101,17 @@ static void run_timers(JSContext *ctx) {
                     if (JS_IsException(ret)) {
                     fail:
                         log_d("Error in run_timers");
-                        // TODO: proper error handling
-                        // dump_error(ctx);
-                        // exit(1);
+                        js_fatal_error_handler(ctx);
                     }
                     min_delay = 0;
                     break;
-                } else if (delay < min_delay) {
-                    min_delay = delay;
+                } else if (delayMs < min_delay) {
+                    min_delay = delayMs;
                 }
             }
         }
         if (!has_timer) break;
-        if (min_delay > 0) {
-            ts.tv_sec = min_delay / 1000;
-            ts.tv_nsec = (min_delay % 1000) * 1000000;
-            nanosleep(&ts, NULL);
-        }
+        if (min_delay > 0) { delay(min_delay); }
     }
 }
 
@@ -166,6 +160,108 @@ JSValue js_require(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
 
     return val;
 }
+
+JSValue native_now(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+    (void)this_val;
+    (void)argc;
+    (void)argv;
+    using namespace std::chrono;
+    auto now = high_resolution_clock::now();
+    auto duration = now.time_since_epoch();
+    auto millis = duration_cast<milliseconds>(duration).count();
+    return JS_NewInt64(ctx, (int64_t)millis);
+}
+
+JSValue native_delay(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+    (void)this_val;
+    (void)argc;
+    (void)argv;
+    if (argc > 0 && JS_IsNumber(ctx, argv[0])) {
+        int ms;
+        JS_ToInt32(ctx, &ms, argv[0]);
+        vTaskDelay(pdMS_TO_TICKS(ms));
+    }
+    return JS_UNDEFINED;
+}
+
+JSValue native_random(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+    (void)this_val;
+    (void)argc;
+    int val = 0;
+    if (argc > 1 && JS_IsNumber(ctx, argv[0]) && JS_IsNumber(ctx, argv[1])) {
+        int a, b;
+        JS_ToInt32(ctx, &a, argv[0]);
+        JS_ToInt32(ctx, &b, argv[1]);
+        val = random(a, b);
+    } else if (argc > 0 && JS_IsNumber(ctx, argv[0])) {
+        int a;
+        JS_ToInt32(ctx, &a, argv[0]);
+        val = random(a);
+    } else {
+        val = random();
+    }
+    return JS_NewInt32(ctx, val);
+}
+
+JSValue native_parse_int(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+    (void)this_val;
+    (void)argc;
+    if (argc > 0 && (JS_IsString(ctx, argv[0]) || JS_IsNumber(ctx, argv[0]) || JS_IsBool(argv[0]))) {
+        double d;
+        JS_ToNumber(ctx, &d, argv[0]);
+        return JS_NewFloat64(ctx, d);
+    }
+    return JS_NewFloat64(ctx, NAN);
+}
+
+JSValue native_to_string(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+    (void)this_val;
+    (void)argc;
+    if (argc > 0) { return JS_ToString(ctx, argv[0]); }
+    return JS_NewString(ctx, "");
+}
+
+JSValue native_to_hex_string(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+    (void)this_val;
+    (void)argc;
+    if (argc > 0 && (JS_IsString(ctx, argv[0]) || JS_IsNumber(ctx, argv[0]) || JS_IsBool(argv[0]))) {
+        int v;
+        JS_ToInt32(ctx, &v, argv[0]);
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%X", v);
+        return JS_NewString(ctx, buf);
+    }
+    return JS_NewString(ctx, "");
+}
+
+JSValue native_to_lower_case(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+    (void)this_val;
+    (void)argc;
+    if (argc > 0 && JS_IsString(ctx, argv[0])) {
+        JSCStringBuf sb;
+        const char *s = JS_ToCString(ctx, argv[0], &sb);
+        if (s) {
+            String text = String(s);
+            text.toLowerCase();
+            return JS_NewString(ctx, text.c_str());
+        }
+    }
+    return JS_NewString(ctx, "");
+}
+
+JSValue native_to_upper_case(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+    (void)this_val;
+    (void)argc;
+    if (argc > 0 && JS_IsString(ctx, argv[0])) {
+        JSCStringBuf sb;
+        const char *s = JS_ToCString(ctx, argv[0], &sb);
+        if (s) {
+            String text = String(s);
+            text.toUpperCase();
+            return JS_NewString(ctx, text.c_str());
+        }
+    }
+    return JS_NewString(ctx, "");
 }
 
 #endif
