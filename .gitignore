@@ -15,3 +15,4 @@ checksum.sha256
 /*.bin
 .vscode/extensions.json
 mqjs_build
+src/modules/bjs_interpreter/mqjs_stdlib.h
