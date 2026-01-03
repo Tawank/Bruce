@@ -34,6 +34,8 @@ static JSValue js_performance_now(JSContext *ctx, JSValue *this_val, int argc, J
     return JS_NewInt64(ctx, (tv.tv_sec * 1000LL + (tv.tv_usec / 1000LL)));
 }
 
+static void js_log_func(void *opaque, const void *buf, size_t buf_len) { fwrite(buf, 1, buf_len, stdout); }
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -63,9 +65,12 @@ void interpreterHandler(void *pvParameters) {
     // Create context.
     Serial.println("Create context");
 
-    size_t mem_size = 65536;
-    uint8_t *mem_buf = (uint8_t *)malloc(mem_size);
+    bool psramAvailable = psramFound();
+
+    size_t mem_size = psramAvailable ? 65536 : 32768;
+    uint8_t *mem_buf = psramAvailable ? (uint8_t *)ps_malloc(mem_size) : (uint8_t *)malloc(mem_size);
     JSContext *ctx = JS_NewContext(mem_buf, mem_size, &js_stdlib);
+    JS_SetLogFunc(ctx, js_log_func);
 
     /*
     // Init containers
@@ -128,8 +133,6 @@ void interpreterHandler(void *pvParameters) {
         JSValue obj;
         obj = JS_GetException(ctx);
         JS_PrintValueF(ctx, obj, JS_DUMP_LONG);
-        printf("\n");
-        exit(1);
     }
 
     JS_FreeContext(ctx);
