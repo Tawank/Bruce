@@ -22,8 +22,6 @@ CFLAGS = [
     "-O2",
     "-m32",
     "-I" + MQJS_PATH,
-    "-Iinclude",  # project headers
-    "-Isrc"
 ]
 
 INCLUDES = [
