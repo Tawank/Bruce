@@ -7,6 +7,8 @@ extern "C" {
 #include "mqjs_stdlib.h"
 }
 
+#include "display_js.h"
+
 char *script = NULL;
 char *scriptDirpath = NULL;
 char *scriptName = NULL;
@@ -14,7 +16,7 @@ char *scriptName = NULL;
 void interpreterHandler(void *pvParameters) {
     Serial.printf(
         "init interpreter:\nPSRAM: [Free: %lu, max alloc: %lu],\nRAM: [Free: %lu, "
-        "max alloc: %lu]\n",
+        "max alloc: %lu]\n\n",
         ESP.getFreePsram(),
         ESP.getMaxAllocPsram(),
         ESP.getFreeHeap(),
@@ -25,8 +27,6 @@ void interpreterHandler(void *pvParameters) {
     tft.setRotation(bruceConfigPins.rotation);
     tft.setTextSize(FM);
     tft.setTextColor(TFT_WHITE);
-    // Create context.
-    Serial.println("Create context");
 
     bool psramAvailable = psramFound();
 
@@ -35,14 +35,12 @@ void interpreterHandler(void *pvParameters) {
     JSContext *ctx = JS_NewContext(mem_buf, mem_size, &js_stdlib);
     JS_SetLogFunc(ctx, js_log_func);
 
-    /*
     // Init containers
     clearDisplayModuleData();
-    */
 
     Serial.printf(
-        "global populated:\nPSRAM: [Free: %lu, max alloc: %lu],\nRAM: [Free: %lu, "
-        "max alloc: %lu]\n",
+        "context created:\nPSRAM: [Free: %lu, max alloc: %lu],\nRAM: [Free: %lu, "
+        "max alloc: %lu]\n\n",
         ESP.getFreePsram(),
         ESP.getMaxAllocPsram(),
         ESP.getFreeHeap(),
@@ -50,6 +48,7 @@ void interpreterHandler(void *pvParameters) {
     );
 
     size_t scriptSize = strlen(script);
+    Serial.printf("Script: %s\n", script);
     Serial.printf("Script length: %zu\n", scriptSize);
 
     JSValue val = JS_Eval(ctx, (const char *)script, scriptSize, scriptName, 0);
@@ -69,7 +68,7 @@ void interpreterHandler(void *pvParameters) {
     free(mem_buf);
 
     // Clean up.
-    // clearDisplayModuleData();
+    clearDisplayModuleData();
 
     interpreter_start = false;
     vTaskDelete(NULL);

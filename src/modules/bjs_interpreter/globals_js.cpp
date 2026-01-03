@@ -148,7 +148,7 @@ JSValue js_performance_now(JSContext *ctx, JSValue *this_val, int argc, JSValue 
     return JS_NewInt64(ctx, (tv.tv_sec * 1000LL + (tv.tv_usec / 1000LL)));
 }
 
-JSValue js_require(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+JSValue native_require(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
     if (argc < 1) { return JS_ThrowTypeError(ctx, "require() expects 1 argument"); }
 
     JSCStringBuf name_buf;

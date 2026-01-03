@@ -327,6 +327,12 @@ static const JSClassDef js_performance_obj =
     JS_OBJECT_DEF("Performance", js_performance);
 
 
+static const JSPropDef js_exports[] = {
+    JS_PROP_END,
+};
+static const JSClassDef js_exports_obj =
+    JS_OBJECT_DEF("Exports", js_exports);
+
 const JSPropDef js_audio[] = {
     JS_CFUNC_DEF("playFile", 1, native_playAudioFile),
     JS_CFUNC_DEF("tone", 3, native_tone),
@@ -393,6 +399,70 @@ const JSPropDef js_storage[] = {
 
 const JSClassDef js_storage_obj = JS_OBJECT_DEF("Storage", js_storage);
 
+/* Display module */
+static const JSPropDef js_display[] = {
+    JS_CFUNC_DEF("color", 4, native_color),
+    JS_CFUNC_DEF("fillScreen", 1, native_fillScreen),
+    JS_CFUNC_DEF("setCursor", 2, native_setCursor),
+    JS_CFUNC_DEF("print", 1, native_print),
+    JS_CFUNC_DEF("println", 1, native_println),
+    JS_CFUNC_DEF("setTextColor", 1, native_setTextColor),
+    JS_CFUNC_DEF("setTextSize", 1, native_setTextSize),
+    JS_CFUNC_DEF("setTextAlign", 2, native_setTextAlign),
+    JS_CFUNC_DEF("drawText", 3, native_drawString),
+    JS_CFUNC_DEF("drawString", 3, native_drawString),
+    JS_CFUNC_DEF("drawPixel", 3, native_drawPixel),
+    JS_CFUNC_DEF("drawLine", 5, native_drawLine),
+    JS_CFUNC_DEF("drawRect", 5, native_drawRect),
+    JS_CFUNC_DEF("drawFillRect", 5, native_drawFillRect),
+    JS_CFUNC_DEF("drawFillRectGradient", 7, native_drawFillRectGradient),
+    JS_CFUNC_DEF("drawRoundRect", 6, native_drawRoundRect),
+    JS_CFUNC_DEF("drawFillRoundRect", 6, native_drawFillRoundRect),
+    JS_CFUNC_DEF("drawCircle", 4, native_drawCircle),
+    JS_CFUNC_DEF("drawFillCircle", 4, native_drawFillCircle),
+    JS_CFUNC_DEF("drawXBitmap", 7, native_drawXBitmap),
+    JS_CFUNC_DEF("drawJpg", 4, native_drawJpg),
+#if !defined(LITE_VERSION)
+    JS_CFUNC_DEF("drawGif", 6, native_drawGif),
+    JS_CFUNC_DEF("gifOpen", 2, native_gifOpen),
+#endif
+    JS_CFUNC_DEF("width", 0, native_width),
+    JS_CFUNC_DEF("height", 0, native_height),
+    JS_CFUNC_DEF("createSprite", 2, native_createSprite),
+    JS_CFUNC_DEF("getRotation", 0, native_getRotation),
+    JS_CFUNC_DEF("getBrightness", 0, native_getBrightness),
+    JS_CFUNC_DEF("setBrightness", 2, native_setBrightness),
+    JS_CFUNC_DEF("restoreBrightness", 0, native_restoreBrightness),
+    JS_PROP_END,
+};
+
+const JSClassDef js_display_obj = JS_OBJECT_DEF("Display", js_display);
+
+static const JSPropDef js_sprite_proto[] = {
+    JS_PROP_END,
+};
+
+static const JSPropDef js_sprite[] = {
+    JS_CFUNC_DEF("push", 0, native_pushSprite),
+    JS_CFUNC_DEF("delete", 0, native_deleteSprite),
+    JS_PROP_END,
+};
+
+static const JSClassDef js_sprite_class =
+    JS_CLASS_DEF("Sprite", 0, native_createSprite, JS_CLASS_SPRITE, js_sprite, js_sprite_proto, NULL, native_sprite_finalizer);
+
+static const JSPropDef js_internal_functions[] = {
+#if !defined(LITE_VERSION)
+    JS_CFUNC_DEF("gifPlayFrame", 3, native_gifPlayFrame),
+    JS_CFUNC_DEF("gifDimensions", 0, native_gifDimensions),
+    JS_CFUNC_DEF("gifReset", 0, native_gifReset),
+    JS_CFUNC_DEF("gifClose", 1, native_gifClose),
+#endif
+    JS_PROP_END,
+};
+
+const JSClassDef js_internal_functions_obj = JS_OBJECT_DEF("InternalFunctions", js_internal_functions);
+
 static const JSPropDef js_global_object[] = {
     JS_PROP_CLASS_DEF("Object", &js_object_class),
     JS_PROP_CLASS_DEF("Function", &js_function_class),
@@ -446,14 +516,29 @@ static const JSPropDef js_global_object[] = {
     JS_CFUNC_DEF("clearTimeout", 1, js_clearTimeout),
 
     /* Bruce functions */
-    JS_CFUNC_DEF("require", 1, js_require ),
+    /* Global functions */
+    JS_PROP_CLASS_DEF("exports", &js_exports_obj),
 
+    JS_CFUNC_DEF("require", 1, native_require ),
+    JS_CFUNC_DEF("now", 0, native_now ),
+    JS_CFUNC_DEF("delay", 1, native_delay ),
+    JS_CFUNC_DEF("random", 2, native_random ),
+    JS_CFUNC_DEF("parse_int", 1, native_parse_int ),
+    JS_CFUNC_DEF("to_string", 1, native_to_string ),
+    JS_CFUNC_DEF("to_hex_string", 1, native_to_hex_string ),
+    JS_CFUNC_DEF("to_lower_case", 1, native_to_lower_case ),
+    JS_CFUNC_DEF("to_upper_case", 1, native_to_upper_case ),
+
+    /* Modules */
     JS_PROP_CLASS_DEF("audio", &js_audio_obj),
     JS_PROP_CLASS_DEF("keyboard", &js_keyboard_obj),
     JS_PROP_CLASS_DEF("notification", &js_notification_obj),
     JS_PROP_CLASS_DEF("subghz", &js_subghz_obj),
     JS_PROP_CLASS_DEF("serial", &js_serial_obj),
     JS_PROP_CLASS_DEF("storage", &js_storage_obj),
+    JS_PROP_CLASS_DEF("display", &js_display_obj),
+
+    JS_PROP_CLASS_DEF("internal_functions", &js_internal_functions_obj),
 
     JS_PROP_END,
 };
