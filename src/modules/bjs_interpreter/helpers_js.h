@@ -19,8 +19,8 @@ struct FileParamsJS {
     bool exist;
     u_int8_t paramOffset;
 };
-
-FileParamsJS js_get_path_from_params(JSContext *ctx, bool checkIfexist = true, bool legacy = false);
+FileParamsJS
+js_get_path_from_params(JSContext *ctx, JSValue *argv, bool checkIfexist = true, bool legacy = false);
 
 #endif
 #endif

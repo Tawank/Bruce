@@ -335,6 +335,64 @@ const JSPropDef js_audio[] = {
 
 const JSClassDef js_audio_obj = JS_OBJECT_DEF("Audio", js_audio);
 
+const JSPropDef js_keyboard[] = {
+    JS_CFUNC_DEF("keyboard", 3, native_keyboard),
+    JS_CFUNC_DEF("getKeysPressed", 0, native_getKeysPressed),
+    JS_CFUNC_DEF("getPrevPress", 1, native_getPrevPress),
+    JS_CFUNC_DEF("getSelPress", 1, native_getSelPress),
+    JS_CFUNC_DEF("getEscPress", 1, native_getEscPress),
+    JS_CFUNC_DEF("getNextPress", 1, native_getNextPress),
+    JS_CFUNC_DEF("getAnyPress", 1, native_getAnyPress),
+    JS_CFUNC_DEF("setLongPress", 1, native_setLongPress),
+    JS_PROP_END,
+};
+
+const JSClassDef js_keyboard_obj = JS_OBJECT_DEF("Keyboard", js_keyboard);
+
+const JSPropDef js_notification[] = {
+    JS_CFUNC_DEF("blink", 1, native_notifyBlink),
+    JS_PROP_END,
+};
+
+const JSClassDef js_notification_obj = JS_OBJECT_DEF("Notification", js_notification);
+
+const JSPropDef js_subghz[] = {
+    JS_CFUNC_DEF("transmitFile", 1, native_subghzTransmitFile),
+    JS_CFUNC_DEF("transmit", 4, native_subghzTransmit),
+    JS_CFUNC_DEF("read", 1, native_subghzRead),
+    JS_CFUNC_DEF("readRaw", 1, native_subghzReadRaw),
+    JS_CFUNC_DEF("setFrequency", 1, native_subghzSetFrequency),
+    JS_PROP_END,
+};
+
+const JSClassDef js_subghz_obj = JS_OBJECT_DEF("SubGHz", js_subghz);
+
+const JSPropDef js_serial[] = {
+    JS_CFUNC_DEF("print", 1, native_serialPrint),
+    JS_CFUNC_DEF("println", 1, native_serialPrintln),
+    JS_CFUNC_DEF("readln", 1, native_serialReadln),
+    JS_CFUNC_DEF("cmd", 1, native_serialCmd),
+    JS_CFUNC_DEF("write", 1, native_serialPrint),
+    JS_PROP_END,
+};
+
+const JSClassDef js_serial_obj = JS_OBJECT_DEF("Serial", js_serial);
+
+const JSPropDef js_storage[] = {
+    JS_CFUNC_DEF("readdir", 2, native_storageReaddir),
+    JS_CFUNC_DEF("read", 2, native_storageRead),
+    JS_CFUNC_DEF("write", 4, native_storageWrite),
+    JS_CFUNC_DEF("rename", 2, native_storageRename),
+    JS_CFUNC_DEF("remove", 1, native_storageRemove),
+    JS_CFUNC_DEF("mkdir", 1, native_storageMkdir),
+    JS_CFUNC_DEF("rmdir", 1, native_storageRmdir),
+    JS_CFUNC_DEF("spaceLittleFS", 0, native_storageSpaceLittleFS),
+    JS_CFUNC_DEF("spaceSDCard", 0, native_storageSpaceSDCard),
+    JS_PROP_END,
+};
+
+const JSClassDef js_storage_obj = JS_OBJECT_DEF("Storage", js_storage);
+
 static const JSPropDef js_global_object[] = {
     JS_PROP_CLASS_DEF("Object", &js_object_class),
     JS_PROP_CLASS_DEF("Function", &js_function_class),
@@ -391,6 +449,11 @@ static const JSPropDef js_global_object[] = {
     JS_CFUNC_DEF("require", 1, js_require ),
 
     JS_PROP_CLASS_DEF("audio", &js_audio_obj),
+    JS_PROP_CLASS_DEF("keyboard", &js_keyboard_obj),
+    JS_PROP_CLASS_DEF("notification", &js_notification_obj),
+    JS_PROP_CLASS_DEF("subghz", &js_subghz_obj),
+    JS_PROP_CLASS_DEF("serial", &js_serial_obj),
+    JS_PROP_CLASS_DEF("storage", &js_storage_obj),
 
     JS_PROP_END,
 };
