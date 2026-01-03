@@ -2,20 +2,19 @@
 #ifndef __GLOBALS_JS_H__
 #define __GLOBALS_JS_H__
 
-#include <chrono>
-#include <duktape.h>
+#include "helpers_js.h"
 
-duk_ret_t putPropGlobalsFunctions(duk_context *ctx, duk_idx_t obj_idx, uint8_t magic);
-duk_ret_t registerGlobals(duk_context *ctx);
+extern "C" {
+JSValue js_gc(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
+JSValue js_load(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
+JSValue js_setTimeout(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
+JSValue js_clearTimeout(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
 
-duk_ret_t native_now(duk_context *ctx);
-duk_ret_t native_delay(duk_context *ctx);
-duk_ret_t native_random(duk_context *ctx);
-duk_ret_t native_parse_int(duk_context *ctx);
-duk_ret_t native_to_string(duk_context *ctx);
-duk_ret_t native_to_hex_string(duk_context *ctx);
-duk_ret_t native_to_lower_case(duk_context *ctx);
-duk_ret_t native_to_upper_case(duk_context *ctx);
+JSValue js_print(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
+JSValue js_date_now(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
+JSValue js_performance_now(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
+JSValue js_require(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
+}
 
 #endif
 #endif

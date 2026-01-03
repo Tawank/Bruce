@@ -186,6 +186,7 @@ ERROR_DEF(type_error, "TypeError", JS_CLASS_TYPE_ERROR)
 ERROR_DEF(uri_error, "URIError", JS_CLASS_URI_ERROR)
 ERROR_DEF(internal_error, "InternalError", JS_CLASS_INTERNAL_ERROR)
 
+
 static const JSPropDef js_math[] = {
     JS_CFUNC_MAGIC_DEF("min", 2, js_math_min_max, 0 ),
     JS_CFUNC_MAGIC_DEF("max", 2, js_math_min_max, 1 ),
@@ -325,6 +326,15 @@ static const JSPropDef js_performance[] = {
 static const JSClassDef js_performance_obj =
     JS_OBJECT_DEF("Performance", js_performance);
 
+
+const JSPropDef js_audio[] = {
+    JS_CFUNC_DEF("playFile", 1, native_playAudioFile),
+    JS_CFUNC_DEF("tone", 3, native_tone),
+    JS_PROP_END,
+};
+
+const JSClassDef js_audio_obj = JS_OBJECT_DEF("Audio", js_audio);
+
 static const JSPropDef js_global_object[] = {
     JS_PROP_CLASS_DEF("Object", &js_object_class),
     JS_PROP_CLASS_DEF("Function", &js_function_class),
@@ -371,6 +381,17 @@ static const JSPropDef js_global_object[] = {
 
     JS_PROP_CLASS_DEF("console", &js_console_obj),
     JS_PROP_CLASS_DEF("performance", &js_performance_obj),
+
+    JS_CFUNC_DEF("gc", 0, js_gc),
+    JS_CFUNC_DEF("load", 1, js_load),
+    JS_CFUNC_DEF("setTimeout", 2, js_setTimeout),
+    JS_CFUNC_DEF("clearTimeout", 1, js_clearTimeout),
+
+    /* Bruce functions */
+    JS_CFUNC_DEF("require", 1, js_require ),
+
+    JS_PROP_CLASS_DEF("audio", &js_audio_obj),
+
     JS_PROP_END,
 };
 
@@ -379,9 +400,7 @@ static const JSPropDef js_global_object[] = {
 static const JSPropDef js_c_function_decl[] = {
     /* must come first if "bind" is defined */
     JS_CFUNC_SPECIAL_DEF("bound", 0, generic_params, js_function_bound ),
-#ifdef CONFIG_CLASS_EXAMPLE
-    JS_CFUNC_SPECIAL_DEF("rectangle_closure_test", 0, generic_params, js_rectangle_closure_test ),
-#endif
+
     JS_PROP_END,
 };
 

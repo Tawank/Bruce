@@ -1,39 +1,6 @@
 #if !defined(LITE_VERSION) && !defined(DISABLE_INTERPRETER)
 #include "interpreter.h"
 
-static JSValue js_print(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    int i;
-    JSValue v;
-
-    for (i = 0; i < argc; i++) {
-        if (i != 0) putchar(' ');
-        v = argv[i];
-        if (JS_IsString(ctx, v)) {
-            JSCStringBuf buf;
-            const char *str;
-            size_t len;
-            str = JS_ToCStringLen(ctx, &len, v, &buf);
-            fwrite(str, 1, len, stdout);
-        } else {
-            JS_PrintValueF(ctx, argv[i], JS_DUMP_LONG);
-        }
-    }
-    putchar('\n');
-    return JS_UNDEFINED;
-}
-
-static JSValue js_date_now(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return JS_NewInt64(ctx, (int64_t)tv.tv_sec * 1000 + (tv.tv_usec / 1000));
-}
-
-static JSValue js_performance_now(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return JS_NewInt64(ctx, (tv.tv_sec * 1000LL + (tv.tv_usec / 1000LL)));
-}
-
 static void js_log_func(void *opaque, const void *buf, size_t buf_len) { fwrite(buf, 1, buf_len, stdout); }
 
 #ifdef __cplusplus
