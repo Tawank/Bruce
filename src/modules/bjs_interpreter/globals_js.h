@@ -19,6 +19,7 @@ JSValue js_performance_now(JSContext *ctx, JSValue *this_val, int argc, JSValue 
 
 JSValue native_require(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
 
+JSValue native_assert(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
 JSValue native_now(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
 JSValue native_delay(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
 JSValue native_random(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);

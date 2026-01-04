@@ -519,6 +519,7 @@ static const JSPropDef js_global_object[] = {
     /* Global functions */
     JS_PROP_CLASS_DEF("exports", &js_exports_obj),
 
+    JS_CFUNC_DEF("assert", 2, native_assert ),
     JS_CFUNC_DEF("require", 1, native_require ),
     JS_CFUNC_DEF("now", 0, native_now ),
     JS_CFUNC_DEF("delay", 1, native_delay ),

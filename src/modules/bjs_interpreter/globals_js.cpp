@@ -161,10 +161,22 @@ JSValue native_require(JSContext *ctx, JSValue *this_val, int argc, JSValue *arg
     return val;
 }
 
+JSValue native_assert(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+    bool ok = false;
+    if (argc > 0) ok = JS_ToBool(ctx, argv[0]);
+    if (ok) { return JS_NewBool(1); }
+    const char *msg = "assert";
+    if (argc > 1 && JS_IsString(ctx, argv[1])) {
+        JSCStringBuf sb;
+        const char *s = JS_ToCString(ctx, argv[1], &sb);
+        if (s) msg = s;
+    }
+    char buf[256];
+    snprintf(buf, sizeof(buf), "Assertion failed: %s", msg);
+    return JS_ThrowTypeError(ctx, "%s", buf);
+}
+
 JSValue native_now(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    (void)this_val;
-    (void)argc;
-    (void)argv;
     using namespace std::chrono;
     auto now = high_resolution_clock::now();
     auto duration = now.time_since_epoch();
@@ -173,9 +185,6 @@ JSValue native_now(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
 }
 
 JSValue native_delay(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    (void)this_val;
-    (void)argc;
-    (void)argv;
     if (argc > 0 && JS_IsNumber(ctx, argv[0])) {
         int ms;
         JS_ToInt32(ctx, &ms, argv[0]);
@@ -185,8 +194,6 @@ JSValue native_delay(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv)
 }
 
 JSValue native_random(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    (void)this_val;
-    (void)argc;
     int val = 0;
     if (argc > 1 && JS_IsNumber(ctx, argv[0]) && JS_IsNumber(ctx, argv[1])) {
         int a, b;
@@ -204,8 +211,6 @@ JSValue native_random(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv
 }
 
 JSValue native_parse_int(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    (void)this_val;
-    (void)argc;
     if (argc > 0 && (JS_IsString(ctx, argv[0]) || JS_IsNumber(ctx, argv[0]) || JS_IsBool(argv[0]))) {
         double d;
         JS_ToNumber(ctx, &d, argv[0]);
@@ -215,28 +220,20 @@ JSValue native_parse_int(JSContext *ctx, JSValue *this_val, int argc, JSValue *a
 }
 
 JSValue native_to_string(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    (void)this_val;
-    (void)argc;
     if (argc > 0) { return JS_ToString(ctx, argv[0]); }
     return JS_NewString(ctx, "");
 }
 
 JSValue native_to_hex_string(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    (void)this_val;
-    (void)argc;
     if (argc > 0 && (JS_IsString(ctx, argv[0]) || JS_IsNumber(ctx, argv[0]) || JS_IsBool(argv[0]))) {
-        int v;
-        JS_ToInt32(ctx, &v, argv[0]);
-        char buf[32];
-        snprintf(buf, sizeof(buf), "%X", v);
-        return JS_NewString(ctx, buf);
+        int value;
+        JS_ToInt32(ctx, &value, argv[0]);
+        return JS_NewString(ctx, String(value, HEX).c_str());
     }
     return JS_NewString(ctx, "");
 }
 
 JSValue native_to_lower_case(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    (void)this_val;
-    (void)argc;
     if (argc > 0 && JS_IsString(ctx, argv[0])) {
         JSCStringBuf sb;
         const char *s = JS_ToCString(ctx, argv[0], &sb);
@@ -250,8 +247,6 @@ JSValue native_to_lower_case(JSContext *ctx, JSValue *this_val, int argc, JSValu
 }
 
 JSValue native_to_upper_case(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    (void)this_val;
-    (void)argc;
     if (argc > 0 && JS_IsString(ctx, argv[0])) {
         JSCStringBuf sb;
         const char *s = JS_ToCString(ctx, argv[0], &sb);

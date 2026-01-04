@@ -14,14 +14,7 @@ char *scriptDirpath = NULL;
 char *scriptName = NULL;
 
 void interpreterHandler(void *pvParameters) {
-    Serial.printf(
-        "init interpreter:\nPSRAM: [Free: %lu, max alloc: %lu],\nRAM: [Free: %lu, "
-        "max alloc: %lu]\n\n",
-        ESP.getFreePsram(),
-        ESP.getMaxAllocPsram(),
-        ESP.getFreeHeap(),
-        ESP.getMaxAllocHeap()
-    );
+    printMemoryUsage("init interpreter");
     if (script == NULL) { return; }
     tft.fillScreen(TFT_BLACK);
     tft.setRotation(bruceConfigPins.rotation);
@@ -38,18 +31,10 @@ void interpreterHandler(void *pvParameters) {
     // Init containers
     clearDisplayModuleData();
 
-    Serial.printf(
-        "context created:\nPSRAM: [Free: %lu, max alloc: %lu],\nRAM: [Free: %lu, "
-        "max alloc: %lu]\n\n",
-        ESP.getFreePsram(),
-        ESP.getMaxAllocPsram(),
-        ESP.getFreeHeap(),
-        ESP.getMaxAllocHeap()
-    );
+    printMemoryUsage("context created");
 
     size_t scriptSize = strlen(script);
-    Serial.printf("Script: %s\n", script);
-    Serial.printf("Script length: %zu\n", scriptSize);
+    log_d("Script length: %zu\n", scriptSize);
 
     JSValue val = JS_Eval(ctx, (const char *)script, scriptSize, scriptName, 0);
 
@@ -101,8 +86,8 @@ void run_bjs_script() {
 bool run_bjs_script_headless(char *code) {
     script = code;
     if (script == NULL) { return false; }
-    scriptDirpath = NULL;
-    scriptName = NULL;
+    scriptDirpath = strdup("/scripts");
+    scriptName = strdup("serial_input.js");
     returnToMenu = true;
     interpreter_start = true;
     return true;
@@ -111,10 +96,11 @@ bool run_bjs_script_headless(char *code) {
 bool run_bjs_script_headless(FS fs, String filename) {
     script = readBigFile(fs, filename);
     if (script == NULL) { return false; }
-    const char *sName = filename.substring(0, filename.lastIndexOf('/')).c_str();
-    const char *sDirpath = filename.substring(filename.lastIndexOf('/') + 1).c_str();
-    scriptDirpath = strdup(sDirpath);
-    scriptName = strdup(sName);
+
+    int slash = filename.lastIndexOf('/');
+    scriptName = strndup(filename.c_str(), slash);
+    scriptDirpath = strdup(filename.c_str() + slash + 1);
+
     returnToMenu = true;
     interpreter_start = true;
     return true;
