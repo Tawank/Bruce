@@ -41,6 +41,7 @@ INCLUDES = [
     'serial_js',
     'storage_js',
     'subghz_js',
+    'wifi_js',
 ]
 
 def sha256_file(path):

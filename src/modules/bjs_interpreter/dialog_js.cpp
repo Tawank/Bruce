@@ -131,34 +131,8 @@ JSValue native_dialogChoice(JSContext *ctx, JSValue *this_val, int argc, JSValue
             }
         }
     } else {
-        // object: use Object.keys(obj) (call a small JS function) to obtain keys
-        const char *src = "(function(o){return Object.keys(o);})";
-        JSValue fn = JS_Eval(ctx, src, strlen(src), "<get_keys>", 0);
-        if (JS_IsException(fn))
-            return JS_ThrowTypeError(ctx, "dialogChoice: failed to enumerate object keys");
-        /* call fn(argv[0]) -> returns an array of keys */
-        JS_PushArg(ctx, argv[0]);
-        JS_PushArg(ctx, fn);
-        JS_PushArg(ctx, JS_NULL);
-        JSValue keys = JS_Call(ctx, 1);
-        if (!JS_IsException(keys) && JS_GetClassID(ctx, keys) == JS_CLASS_ARRAY) {
-            uint32_t len = 0;
-            JSValue l = JS_GetPropertyStr(ctx, keys, "length");
-            if (JS_IsNumber(ctx, l)) JS_ToUint32(ctx, &len, l);
-            for (uint32_t i = 0; i < len; ++i) {
-                JSValue kv = JS_GetPropertyUint32(ctx, keys, i);
-                if (JS_IsString(ctx, kv)) {
-                    JSCStringBuf ksb;
-                    const char *key = JS_ToCString(ctx, kv, &ksb);
-                    JSValue v = JS_GetPropertyStr(ctx, argv[0], key);
-                    if (JS_IsString(ctx, v)) {
-                        JSCStringBuf vsb;
-                        const char *val = JS_ToCString(ctx, v, &vsb);
-                        options.push_back({key, [val, &result]() { result = val; }});
-                    }
-                }
-            }
-        }
+        // TODO: Change to use JS_GetOwnPropertyByIndex
+        return JS_ThrowTypeError(ctx, "dialogChoice: failed to enumerate object keys");
     }
 
     loopOptions(options, MENU_TYPE_REGULAR, "", 0, true);

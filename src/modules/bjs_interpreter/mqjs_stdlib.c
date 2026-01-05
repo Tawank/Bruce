@@ -494,6 +494,21 @@ static const JSPropDef js_i2c[] = {
 
 const JSClassDef js_i2c_obj = JS_OBJECT_DEF("I2C", js_i2c);
 
+/* WiFi module */
+static const JSPropDef js_wifi[] = {
+    JS_CFUNC_DEF("connected", 0, native_wifiConnected),
+    JS_CFUNC_DEF("connectDialog", 0, native_wifiConnectDialog),
+    JS_CFUNC_DEF("connect", 3, native_wifiConnect),
+    JS_CFUNC_DEF("scan", 0, native_wifiScan),
+    JS_CFUNC_DEF("disconnect", 0, native_wifiDisconnect),
+    JS_CFUNC_DEF("httpFetch", 2, native_httpFetch),
+    JS_CFUNC_DEF("getMACAddress", 0, native_wifiMACAddress),
+    JS_CFUNC_DEF("getIPAddress", 0, native_ipAddress),
+    JS_PROP_END,
+};
+
+const JSClassDef js_wifi_obj = JS_OBJECT_DEF("WiFi", js_wifi);
+
 /* Display module */
 static const JSPropDef js_display[] = {
     JS_CFUNC_DEF("color", 4, native_color),
@@ -687,6 +702,7 @@ static const JSPropDef js_global_object[] = {
     JS_PROP_CLASS_DEF("serial", &js_serial_obj),
     JS_PROP_CLASS_DEF("storage", &js_storage_obj),
     JS_PROP_CLASS_DEF("subghz", &js_subghz_obj),
+    JS_PROP_CLASS_DEF("wifi", &js_wifi_obj),
 
     // MUST BE IN THE SAME ORDER AS IN THE user_classes_js FILE
     JS_PROP_CLASS_DEF("Sprite", &js_sprite_class),
