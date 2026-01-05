@@ -27,9 +27,12 @@ CFLAGS = [
 INCLUDES = [
     'user_classes_js',
     'audio_js',
-    'globals_js',
+    'device_js',
     'display_js',
+    'globals_js',
+    'gpio_js',
     'keyboard_js',
+    'math_js',
     'notification_js',
     'subghz_js',
     'serial_js',

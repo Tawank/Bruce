@@ -226,6 +226,12 @@ static const JSPropDef js_math[] = {
     JS_CFUNC_SPECIAL_DEF("log2", 1, f_f, js_log2 ),
     JS_CFUNC_SPECIAL_DEF("log10", 1, f_f, js_log10 ),
 
+    /* Bruce: additional math helpers */
+    JS_CFUNC_DEF("acosh", 1, native_math_acosh),
+    JS_CFUNC_DEF("asinh", 1, native_math_asinh),
+    JS_CFUNC_DEF("atanh", 1, native_math_atanh),
+    JS_CFUNC_DEF("is_equal", 3, native_math_is_equal),
+
     JS_PROP_END,
 };
 
@@ -399,6 +405,39 @@ const JSPropDef js_storage[] = {
 
 const JSClassDef js_storage_obj = JS_OBJECT_DEF("Storage", js_storage);
 
+/* Device module */
+static const JSPropDef js_device[] = {
+    JS_CFUNC_DEF("getName", 0, native_getDeviceName),
+    JS_CFUNC_DEF("getBoard", 0, native_getBoard),
+    JS_CFUNC_DEF("getModel", 0, native_getBoard),
+    JS_CFUNC_DEF("getBruceVersion", 0, native_getBruceVersion),
+    JS_CFUNC_DEF("getBatteryCharge", 0, native_getBattery),
+    JS_CFUNC_DEF("getBatteryDetailed", 0, native_getBatteryDetailed),
+    JS_CFUNC_DEF("getFreeHeapSize", 0, native_getFreeHeapSize),
+    JS_CFUNC_DEF("getEEPROMSize", 0, native_getEEPROMSize),
+    JS_PROP_END,
+};
+
+const JSClassDef js_device_obj = JS_OBJECT_DEF("Device", js_device);
+
+/* GPIO module */
+static const JSPropDef js_gpio[] = {
+    JS_CFUNC_DEF("pinMode", 3, native_pinMode),
+    JS_CFUNC_DEF("digitalRead", 1, native_digitalRead),
+    JS_CFUNC_DEF("analogRead", 1, native_analogRead),
+    JS_CFUNC_DEF("touchRead", 1, native_touchRead),
+    JS_CFUNC_DEF("digitalWrite", 2, native_digitalWrite),
+    JS_CFUNC_DEF("analogWrite", 2, native_analogWrite),
+    JS_CFUNC_DEF("dacWrite", 2, native_dacWrite),
+    JS_CFUNC_DEF("ledcSetup", 3, native_ledcSetup),
+    JS_CFUNC_DEF("ledcAttachPin", 2, native_ledcAttachPin),
+    JS_CFUNC_DEF("ledcWrite", 2, native_ledcWrite),
+    JS_CFUNC_DEF("pins", 0, native_pins),
+    JS_PROP_END,
+};
+
+const JSClassDef js_gpio_obj = JS_OBJECT_DEF("GPIO", js_gpio);
+
 /* Display module */
 static const JSPropDef js_display[] = {
     JS_CFUNC_DEF("color", 4, native_color),
@@ -559,12 +598,15 @@ static const JSPropDef js_global_object[] = {
 
     /* Modules */
     JS_PROP_CLASS_DEF("audio", &js_audio_obj),
+    JS_PROP_CLASS_DEF("device", &js_device_obj),
+    JS_PROP_CLASS_DEF("display", &js_display_obj),
+    JS_PROP_CLASS_DEF("gpio", &js_gpio_obj),
     JS_PROP_CLASS_DEF("keyboard", &js_keyboard_obj),
     JS_PROP_CLASS_DEF("notification", &js_notification_obj),
-    JS_PROP_CLASS_DEF("subghz", &js_subghz_obj),
     JS_PROP_CLASS_DEF("serial", &js_serial_obj),
     JS_PROP_CLASS_DEF("storage", &js_storage_obj),
-    JS_PROP_CLASS_DEF("display", &js_display_obj),
+    JS_PROP_CLASS_DEF("subghz", &js_subghz_obj),
+
 
     JS_PROP_CLASS_DEF("Sprite", &js_sprite_class),
 
