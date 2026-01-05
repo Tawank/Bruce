@@ -402,7 +402,7 @@ const JSClassDef js_storage_obj = JS_OBJECT_DEF("Storage", js_storage);
 /* Display module */
 static const JSPropDef js_display[] = {
     JS_CFUNC_DEF("color", 4, native_color),
-    JS_CFUNC_DEF("fillScreen", 1, native_fillScreen),
+    JS_CFUNC_DEF("fill", 1, native_fillScreen),
     JS_CFUNC_DEF("setCursor", 2, native_setCursor),
     JS_CFUNC_DEF("print", 1, native_print),
     JS_CFUNC_DEF("println", 1, native_println),
@@ -439,12 +439,39 @@ static const JSPropDef js_display[] = {
 const JSClassDef js_display_obj = JS_OBJECT_DEF("Display", js_display);
 
 static const JSPropDef js_sprite_proto[] = {
+    JS_CFUNC_DEF("setTextColor", 1, native_setTextColor),
+    JS_CFUNC_DEF("setTextSize", 1, native_setTextSize),
+    JS_CFUNC_DEF("setTextAlign", 2, native_setTextAlign),
+    JS_CFUNC_DEF("drawText", 3, native_drawString),
+    JS_CFUNC_DEF("drawString", 3, native_drawString),
+    JS_CFUNC_DEF("drawPixel", 3, native_drawPixel),
+    JS_CFUNC_DEF("drawLine", 5, native_drawLine),
+    JS_CFUNC_DEF("drawRect", 5, native_drawRect),
+    JS_CFUNC_DEF("drawFillRect", 5, native_drawFillRect),
+    JS_CFUNC_DEF("drawFillRectGradient", 7, native_drawFillRectGradient),
+    JS_CFUNC_DEF("drawRoundRect", 6, native_drawRoundRect),
+    JS_CFUNC_DEF("drawFillRoundRect", 6, native_drawFillRoundRect),
+    JS_CFUNC_DEF("drawCircle", 4, native_drawCircle),
+    JS_CFUNC_DEF("drawFillCircle", 4, native_drawFillCircle),
+    JS_CFUNC_DEF("drawXBitmap", 7, native_drawXBitmap),
+    JS_CFUNC_DEF("drawJpg", 4, native_drawJpg),
+    JS_CFUNC_DEF("width", 0, native_width),
+    JS_CFUNC_DEF("height", 0, native_height),
+    JS_CFUNC_DEF("setCursor", 2, native_setCursor),
+    JS_CFUNC_DEF("print", 1, native_print),
+    JS_CFUNC_DEF("println", 1, native_println),
+    JS_CFUNC_DEF("fill", 1, native_fillScreen),
+    JS_CFUNC_DEF("color", 4, native_color),
+    JS_CFUNC_DEF("getRotation", 0, native_getRotation),
+    JS_CFUNC_DEF("getBrightness", 0, native_getBrightness),
+    JS_CFUNC_DEF("setBrightness", 2, native_setBrightness),
+    JS_CFUNC_DEF("restoreBrightness", 0, native_restoreBrightness),
+    JS_CFUNC_DEF("pushSprite", 0, native_pushSprite),
+    JS_CFUNC_DEF("deleteSprite", 0, native_deleteSprite),
     JS_PROP_END,
 };
 
 static const JSPropDef js_sprite[] = {
-    JS_CFUNC_DEF("push", 0, native_pushSprite),
-    JS_CFUNC_DEF("delete", 0, native_deleteSprite),
     JS_PROP_END,
 };
 
@@ -538,6 +565,8 @@ static const JSPropDef js_global_object[] = {
     JS_PROP_CLASS_DEF("serial", &js_serial_obj),
     JS_PROP_CLASS_DEF("storage", &js_storage_obj),
     JS_PROP_CLASS_DEF("display", &js_display_obj),
+
+    JS_PROP_CLASS_DEF("Sprite", &js_sprite_class),
 
     JS_PROP_CLASS_DEF("internal_functions", &js_internal_functions_obj),
 

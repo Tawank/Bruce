@@ -4,6 +4,7 @@
 #include <globals.h>
 
 void js_fatal_error_handler(JSContext *ctx) {
+    tft.fillScreen(bruceConfig.bgColor);
     tft.setTextSize(FM);
     tft.setTextColor(TFT_RED, bruceConfig.bgColor);
     tft.drawCentreString("Error", tftWidth / 2, 10, 1);
@@ -14,12 +15,23 @@ void js_fatal_error_handler(JSContext *ctx) {
     JSValue obj;
     JSCStringBuf buf;
     obj = JS_GetException(ctx);
+
+    JSValue stackVal = JS_GetPropertyStr(ctx, obj, "stack");
+
+    JSCStringBuf sb;
+    const char *stackTrace = NULL;
+    if (!JS_IsUndefined(stackVal) && JS_IsString(ctx, stackVal)) {
+        stackTrace = JS_ToCString(ctx, stackVal, &sb);
+    } else {
+        /* fallback to exception's string representation */
+        stackTrace = JS_ToCString(ctx, obj, &sb);
+    }
+
     JS_PrintValueF(ctx, obj, JS_DUMP_LONG);
     const char *msg = JS_ToCString(ctx, obj, &buf);
 
-    const char *errorMessage = "JS FATAL ERROR: %s\n";
-    tft.printf(errorMessage, (msg != NULL ? msg : "no message"));
-    Serial.printf(errorMessage, (msg != NULL ? msg : "no message"));
+    tft.printf("%s\n%s\n", (msg != NULL ? msg : "JS Error"), stackTrace);
+    Serial.printf("%s\n%s\n", (msg != NULL ? msg : "JS Error"), stackTrace);
     Serial.flush();
 
     delay(500);

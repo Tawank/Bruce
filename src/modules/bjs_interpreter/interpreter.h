@@ -20,7 +20,6 @@ bool run_bjs_script_headless(char *code);
 bool run_bjs_script_headless(FS fs, String filename);
 
 const char *nth_strchr(const char *s, char c, int8_t n);
-void js_fatal_error_handler(void *udata, const char *msg);
 
 #endif
 #endif

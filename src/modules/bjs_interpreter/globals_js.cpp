@@ -100,7 +100,7 @@ void run_timers(JSContext *ctx) {
                     ret = JS_Call(ctx, 0);
                     if (JS_IsException(ret)) {
                     fail:
-                        log_d("Error in run_timers");
+                        log_e("Error in run_timers");
                         js_fatal_error_handler(ctx);
                     }
                     min_delay = 0;
@@ -148,6 +148,7 @@ JSValue js_performance_now(JSContext *ctx, JSValue *this_val, int argc, JSValue 
     return JS_NewInt64(ctx, (tv.tv_sec * 1000LL + (tv.tv_usec / 1000LL)));
 }
 
+// TODO: Implement user module
 JSValue native_require(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
     if (argc < 1) { return JS_ThrowTypeError(ctx, "require() expects 1 argument"); }
 
