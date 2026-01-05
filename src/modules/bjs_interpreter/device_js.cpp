@@ -34,7 +34,7 @@ JSValue native_getBatteryDetailed(JSContext *ctx, JSValue *this_val, int argc, J
     JS_SetPropertyStr(ctx, obj, "remaining_capacity", JS_NewInt32(ctx, bq.getRemainCap()));
     JS_SetPropertyStr(ctx, obj, "full_capacity", JS_NewInt32(ctx, bq.getFullChargeCap()));
     JS_SetPropertyStr(ctx, obj, "design_capacity", JS_NewInt32(ctx, bq.getDesignCap()));
-    JS_SetPropertyStr(ctx, obj, "is_charging", JS_NewBool(ctx, bq.getIsCharging()));
+    JS_SetPropertyStr(ctx, obj, "is_charging", JS_NewBool(bq.getIsCharging()));
     JS_SetPropertyStr(
         ctx,
         obj,

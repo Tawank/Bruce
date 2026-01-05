@@ -28,8 +28,7 @@
 
 #include <mquickjs_build.h>
 
-/* defined in mqjs_example.c */
-//#define CONFIG_CLASS_EXAMPLE
+#include "user_classes_js.h"
 
 static const JSPropDef js_object_proto[] = {
     JS_CFUNC_DEF("hasOwnProperty", 1, js_object_hasOwnProperty),
@@ -368,6 +367,51 @@ const JSPropDef js_notification[] = {
 
 const JSClassDef js_notification_obj = JS_OBJECT_DEF("Notification", js_notification);
 
+/* BadUSB module */
+static const JSPropDef js_badusb[] = {
+    JS_CFUNC_DEF("setup", 0, native_badusbSetup),
+    JS_CFUNC_DEF("print", 1, native_badusbPrint),
+    JS_CFUNC_DEF("println", 1, native_badusbPrintln),
+    JS_CFUNC_DEF("press", 1, native_badusbPress),
+    JS_CFUNC_DEF("hold", 1, native_badusbHold),
+    JS_CFUNC_DEF("release", 1, native_badusbRelease),
+    JS_CFUNC_DEF("releaseAll", 0, native_badusbReleaseAll),
+    JS_CFUNC_DEF("pressRaw", 1, native_badusbPressRaw),
+    JS_CFUNC_DEF("runFile", 1, native_badusbRunFile),
+    JS_PROP_END,
+};
+
+const JSClassDef js_badusb_obj = JS_OBJECT_DEF("BadUSB", js_badusb);
+
+/* IR module */
+static const JSPropDef js_ir[] = {
+    JS_CFUNC_DEF("read", 1, native_irRead),
+    JS_CFUNC_DEF("readRaw", 1, native_irReadRaw),
+    JS_CFUNC_DEF("transmitFile", 1, native_irTransmitFile),
+    JS_CFUNC_DEF("transmit", 3, native_irTransmit),
+    JS_PROP_END,
+};
+
+const JSClassDef js_ir_obj = JS_OBJECT_DEF("IR", js_ir);
+
+/* Dialog module */
+static const JSPropDef js_dialog[] = {
+    JS_CFUNC_DEF("message", 2, native_dialogMessage),
+    JS_CFUNC_DEF("info", 2, native_dialogInfo),
+    JS_CFUNC_DEF("success", 2, native_dialogSuccess),
+    JS_CFUNC_DEF("warning", 2, native_dialogWarning),
+    JS_CFUNC_DEF("error", 2, native_dialogError),
+    JS_CFUNC_DEF("choice", 1, native_dialogChoice),
+    JS_CFUNC_DEF("pickFile", 2, native_dialogPickFile),
+    JS_CFUNC_DEF("viewFile", 1, native_dialogViewFile),
+    JS_CFUNC_DEF("viewText", 2, native_dialogViewText),
+    JS_CFUNC_DEF("createTextViewer", 2, native_dialogCreateTextViewer),
+    JS_CFUNC_DEF("drawStatusBar", 0, native_drawStatusBar),
+    JS_PROP_END,
+};
+
+const JSClassDef js_dialog_obj = JS_OBJECT_DEF("Dialog", js_dialog);
+
 const JSPropDef js_subghz[] = {
     JS_CFUNC_DEF("transmitFile", 1, native_subghzTransmitFile),
     JS_CFUNC_DEF("transmit", 4, native_subghzTransmit),
@@ -438,6 +482,18 @@ static const JSPropDef js_gpio[] = {
 
 const JSClassDef js_gpio_obj = JS_OBJECT_DEF("GPIO", js_gpio);
 
+/* I2C module */
+static const JSPropDef js_i2c[] = {
+    JS_CFUNC_DEF("begin", 3, native_i2c_begin),
+    JS_CFUNC_DEF("scan", 0, native_i2c_scan),
+    JS_CFUNC_DEF("write", 3, native_i2c_write),
+    JS_CFUNC_DEF("read", 2, native_i2c_read),
+    JS_CFUNC_DEF("writeRead", 4, native_i2c_write_read),
+    JS_PROP_END,
+};
+
+const JSClassDef js_i2c_obj = JS_OBJECT_DEF("I2C", js_i2c);
+
 /* Display module */
 static const JSPropDef js_display[] = {
     JS_CFUNC_DEF("color", 4, native_color),
@@ -476,6 +532,26 @@ static const JSPropDef js_display[] = {
 };
 
 const JSClassDef js_display_obj = JS_OBJECT_DEF("Display", js_display);
+/* TextViewer (dialog.createTextViewer) */
+static const JSPropDef js_textviewer_proto[] = {
+    JS_CFUNC_DEF("draw", 0, native_dialogCreateTextViewerDraw),
+    JS_CFUNC_DEF("scrollUp", 0, native_dialogCreateTextViewerScrollUp),
+    JS_CFUNC_DEF("scrollDown", 0, native_dialogCreateTextViewerScrollDown),
+    JS_CFUNC_DEF("scrollToLine", 1, native_dialogCreateTextViewerScrollToLine),
+    JS_CFUNC_DEF("getLine", 1, native_dialogCreateTextViewerGetLine),
+    JS_CFUNC_DEF("getMaxLines", 0, native_dialogCreateTextViewerGetMaxLines),
+    JS_CFUNC_DEF("getVisibleText", 0, native_dialogCreateTextViewerGetVisibleText),
+    JS_CFUNC_DEF("clear", 0, native_dialogCreateTextViewerClear),
+    JS_CFUNC_DEF("setText", 1, native_dialogCreateTextViewerFromString),
+    JS_CFUNC_DEF("close", 0, native_dialogCreateTextViewerClose),
+    JS_PROP_END,
+};
+
+static const JSPropDef js_textviewer[] = { JS_PROP_END };
+
+static const JSClassDef js_textviewer_class = JS_CLASS_DEF(
+    "TextViewer", 0, native_dialogCreateTextViewer, JS_CLASS_TEXTVIEWER, js_textviewer, js_textviewer_proto, NULL, native_textviewer_finalizer
+);
 
 static const JSPropDef js_sprite_proto[] = {
     JS_CFUNC_DEF("setTextColor", 1, native_setTextColor),
@@ -518,6 +594,7 @@ static const JSClassDef js_sprite_class =
     JS_CLASS_DEF("Sprite", 0, native_createSprite, JS_CLASS_SPRITE, js_sprite, js_sprite_proto, NULL, native_sprite_finalizer);
 
 static const JSPropDef js_internal_functions[] = {
+    JS_PROP_CLASS_DEF("dialog", &js_dialog_obj),
 #if !defined(LITE_VERSION)
     JS_CFUNC_DEF("gifPlayFrame", 3, native_gifPlayFrame),
     JS_CFUNC_DEF("gifDimensions", 0, native_gifDimensions),
@@ -598,17 +675,22 @@ static const JSPropDef js_global_object[] = {
 
     /* Modules */
     JS_PROP_CLASS_DEF("audio", &js_audio_obj),
+    JS_PROP_CLASS_DEF("badusb", &js_badusb_obj),
     JS_PROP_CLASS_DEF("device", &js_device_obj),
     JS_PROP_CLASS_DEF("display", &js_display_obj),
+    JS_PROP_CLASS_DEF("dialog", &js_dialog_obj),
     JS_PROP_CLASS_DEF("gpio", &js_gpio_obj),
+    JS_PROP_CLASS_DEF("i2c", &js_i2c_obj),
+    JS_PROP_CLASS_DEF("ir", &js_ir_obj),
     JS_PROP_CLASS_DEF("keyboard", &js_keyboard_obj),
     JS_PROP_CLASS_DEF("notification", &js_notification_obj),
     JS_PROP_CLASS_DEF("serial", &js_serial_obj),
     JS_PROP_CLASS_DEF("storage", &js_storage_obj),
     JS_PROP_CLASS_DEF("subghz", &js_subghz_obj),
 
-
+    // MUST BE IN THE SAME ORDER AS IN THE user_classes_js FILE
     JS_PROP_CLASS_DEF("Sprite", &js_sprite_class),
+    JS_PROP_CLASS_DEF("TextViewer", &js_textviewer_class),
 
     JS_PROP_CLASS_DEF("internal_functions", &js_internal_functions_obj),
 

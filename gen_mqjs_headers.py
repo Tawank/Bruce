@@ -27,16 +27,20 @@ CFLAGS = [
 INCLUDES = [
     'user_classes_js',
     'audio_js',
+    'badusb_js',
     'device_js',
     'display_js',
+    'dialog_js',
     'globals_js',
     'gpio_js',
+    'i2c_js',
+    'ir_js',
     'keyboard_js',
     'math_js',
     'notification_js',
-    'subghz_js',
     'serial_js',
-    'storage_js'
+    'storage_js',
+    'subghz_js',
 ]
 
 def sha256_file(path):
