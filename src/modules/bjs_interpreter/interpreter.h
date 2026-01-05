@@ -19,7 +19,5 @@ void run_bjs_script();
 bool run_bjs_script_headless(char *code);
 bool run_bjs_script_headless(FS fs, String filename);
 
-const char *nth_strchr(const char *s, char c, int8_t n);
-
 #endif
 #endif
