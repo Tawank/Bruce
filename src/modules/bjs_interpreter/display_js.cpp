@@ -249,30 +249,49 @@ JSValue native_drawPixel(JSContext *ctx, JSValue *this_val, int argc, JSValue *a
 }
 
 JSValue native_drawXBitmap(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    // Accept strings for now or throw if not a string (ArrayBuffer support to add later)
+    // Accept strings, Uint8Array, ArrayBuffer or JS arrays containing byte values.
     int bitmapWidth = 0, bitmapHeight = 0;
     if (argc > 3 && JS_IsNumber(ctx, argv[3])) JS_ToInt32(ctx, &bitmapWidth, argv[3]);
     if (argc > 4 && JS_IsNumber(ctx, argv[4])) JS_ToInt32(ctx, &bitmapHeight, argv[4]);
+
     size_t len = 0;
-    const char *data = NULL;
-    if (argc > 2 && JS_IsString(ctx, argv[2])) {
-        JSCStringBuf sb;
-        data = JS_ToCStringLen(ctx, &len, argv[2], &sb);
-    } else {
-        return JS_ThrowTypeError(ctx, "%s: Expected string/ArrayBuffer for bitmap data", "drawXBitmap");
+    const uint8_t *data = NULL;
+
+    if (argc > 2) {
+        const char *s = NULL;
+        if (JS_IsString(ctx, argv[2])) {
+            JSCStringBuf sb;
+            s = JS_ToCStringLen(ctx, &len, argv[2], &sb);
+        } else if (JS_IsTypedArray(ctx, argv[2])) {
+            s = JS_GetTypedArrayBuffer(ctx, &len, argv[2]);
+        }
+        if (s) { data = (const uint8_t *)s; }
     }
+
+    if (data == NULL) {
+        return JS_ThrowTypeError(
+            ctx, "%s: Expected string/ArrayBuffer/Uint8Array for bitmap data", "drawXBitmap"
+        );
+    }
+
     size_t expectedSize = ((bitmapWidth + 7) / 8) * bitmapHeight;
-    if (len != expectedSize) return JS_ThrowTypeError(ctx, "Bitmap size mismatch");
+    if (len != expectedSize) {
+        Serial.printf("data = %s\n", data);
+        return JS_ThrowTypeError(ctx, "Bitmap size mismatch, len: %d, expected: %d", len, expectedSize);
+    }
+
     int x = 0, y = 0, fg = 0, bg = -1;
     if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &x, argv[0]);
     if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &y, argv[1]);
     if (argc > 5 && JS_IsNumber(ctx, argv[5])) JS_ToInt32(ctx, &fg, argv[5]);
     if (argc > 6 && JS_IsNumber(ctx, argv[6])) JS_ToInt32(ctx, &bg, argv[6]);
+
     if (bg >= 0) {
         get_display(ctx, this_val)->drawXBitmap(x, y, (uint8_t *)data, bitmapWidth, bitmapHeight, fg, bg);
     } else {
         get_display(ctx, this_val)->drawXBitmap(x, y, (uint8_t *)data, bitmapWidth, bitmapHeight, fg);
     }
+
     return JS_UNDEFINED;
 }
 

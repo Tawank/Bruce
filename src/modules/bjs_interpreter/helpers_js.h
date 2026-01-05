@@ -13,6 +13,7 @@ extern "C" {
 
 extern "C" {
 void js_fatal_error_handler(JSContext *ctx);
+bool JS_IsTypedArray(JSContext *ctx, JSValue val);
 }
 
 struct FileParamsJS {

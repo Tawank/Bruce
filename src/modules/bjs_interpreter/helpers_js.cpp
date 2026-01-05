@@ -41,6 +41,11 @@ void js_fatal_error_handler(JSContext *ctx) {
     // abort();
 }
 
+bool JS_IsTypedArray(JSContext *ctx, JSValue val) {
+    int classId = JS_GetClassID(ctx, val);
+    return (classId >= JS_CLASS_ARRAY_BUFFER && classId <= JS_CLASS_UINT32_ARRAY);
+}
+
 FileParamsJS js_get_path_from_params(JSContext *ctx, JSValue *argv, bool checkIfexist, bool legacy) {
     FileParamsJS filePath;
     filePath.fs = &LittleFS;
