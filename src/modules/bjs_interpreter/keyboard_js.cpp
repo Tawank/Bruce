@@ -42,31 +42,27 @@ JSValue native_keyboard(JSContext *ctx, JSValue *this_val, int argc, JSValue *ar
 }
 
 JSValue native_getPrevPress(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    bool val = ((!(argc > 0 && JS_ToBool(ctx, argv[0])) && check(PrevPress)) || PrevPress);
-    return JS_NewBool(val);
+    return JS_NewBool(PrevPress);
 }
 
 JSValue native_getSelPress(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    bool val = ((!(argc > 0 && JS_ToBool(ctx, argv[0])) && check(SelPress)) || SelPress);
-    return JS_NewBool(val);
+    return JS_NewBool(SelPress);
 }
 
 JSValue native_getEscPress(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    bool val = ((!(argc > 0 && JS_ToBool(ctx, argv[0])) && check(EscPress)) || EscPress);
-    return JS_NewBool(val);
+    return JS_NewBool(EscPress);
 }
 
 JSValue native_getNextPress(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    bool val = ((!(argc > 0 && JS_ToBool(ctx, argv[0])) && check(NextPress)) || NextPress);
-    return JS_NewBool(val);
+    return JS_NewBool(NextPress);
 }
 
 JSValue native_getAnyPress(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    bool val = ((!(argc > 0 && JS_ToBool(ctx, argv[0])) && check(AnyKeyPress)) || AnyKeyPress);
-    return JS_NewBool(val);
+    return JS_NewBool(AnyKeyPress);
 }
 
 JSValue native_setLongPress(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+    // TODO: if backgroud app implemented, store in ctx and set if on foreground/background
     LongPress = (argc > 0) ? JS_ToBool(ctx, argv[0]) : false;
     return JS_UNDEFINED;
 }

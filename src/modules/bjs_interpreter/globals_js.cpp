@@ -8,20 +8,17 @@ JSValue js_gc(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
 }
 
 JSValue js_load(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    const char *filename;
     JSCStringBuf buf_str;
-    uint8_t *buf = NULL;
-    int buf_len = 0;
-    JSValue ret;
-
-    filename = JS_ToCString(ctx, argv[0], &buf_str);
+    const char *filename = JS_ToCString(ctx, argv[0], &buf_str);
     if (!filename) return JS_EXCEPTION;
 
-    // TODO: Load file
-    // buf = load_file(filename, &buf_len);
+    FileParamsJS fileParams = js_get_path_from_params(ctx, argv);
 
-    ret = JS_Eval(ctx, (const char *)buf, buf_len, filename, 0);
-    free(buf);
+    size_t script_len = 0;
+    char *script = readBigFile(fileParams.fs, fileParams.path, false, &script_len);
+
+    JSValue ret = JS_Eval(ctx, (const char *)script, script_len, filename, 0);
+    free(script);
     return ret;
 }
 

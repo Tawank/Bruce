@@ -240,16 +240,4 @@ extern inline bool check(volatile bool &btn) {
 
 extern gpio_num_t mic_bclk_pin; // used to configure Cardputer ADV Microphone
 
-inline void printMemoryUsage(const char *msg = "") {
-    Serial.printf(
-        "%s:\nPSRAM: [Free: %lu, max alloc: %lu],\nRAM: [Free: %lu, "
-        "max alloc: %lu]\n\n",
-        msg,
-        ESP.getFreePsram(),
-        ESP.getMaxAllocPsram(),
-        ESP.getFreeHeap(),
-        ESP.getMaxAllocHeap()
-    );
-}
-
 #endif

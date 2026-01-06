@@ -96,29 +96,30 @@ JSValue native_httpFetch(JSContext *ctx, JSValue *this_val, int argc, JSValue *a
     HTTPClient http;
     http.setReuse(false);
 
+    JSCStringBuf stringBuffer;
+
     if (WiFi.status() != WL_CONNECTED) wifiConnectMenu();
     if (WiFi.status() != WL_CONNECTED) return JS_ThrowTypeError(ctx, "WIFI Not Connected");
 
     if (argc < 1 || !JS_IsString(ctx, argv[0]))
         return JS_ThrowTypeError(ctx, "httpFetch(url:string, options?:object|headers?:array)");
-    JSCStringBuf urlb;
-    const char *url = JS_ToCString(ctx, argv[0], &urlb);
+
+    const char *url = JS_ToCString(ctx, argv[0], &stringBuffer);
     http.begin(url);
 
     // handle headers if a simple array of pairs was passed as second arg
     if (argc > 1 && JS_GetClassID(ctx, argv[1]) == JS_CLASS_ARRAY) {
-        JSValue l = JS_GetPropertyStr(ctx, argv[1], "length");
-        if (JS_IsNumber(ctx, l)) {
-            uint32_t len = 0;
-            JS_ToUint32(ctx, &len, l);
-            for (uint32_t i = 0; i + 1 < len; i += 2) {
-                JSValue k = JS_GetPropertyUint32(ctx, argv[1], i);
-                JSValue v = JS_GetPropertyUint32(ctx, argv[1], i + 1);
-                if (JS_IsString(ctx, k) && JS_IsString(ctx, v)) {
-                    JSCStringBuf kb, vb;
-                    const char *ks = JS_ToCString(ctx, k, &kb);
-                    const char *vs = JS_ToCString(ctx, v, &vb);
-                    http.addHeader(ks ? ks : "", vs ? vs : "");
+        JSValue jsvArrayLength = JS_GetPropertyStr(ctx, argv[1], "length");
+        if (JS_IsNumber(ctx, jsvArrayLength)) {
+            uint32_t arrayLength = 0;
+            JS_ToUint32(ctx, &arrayLength, jsvArrayLength);
+            for (uint32_t i = 0; i + 1 < arrayLength; i += 2) {
+                JSValue jsvKey = JS_GetPropertyUint32(ctx, argv[1], i);
+                JSValue jsvValue = JS_GetPropertyUint32(ctx, argv[1], i + 1);
+                if (JS_IsString(ctx, jsvKey) && JS_IsString(ctx, jsvValue)) {
+                    const char *key = JS_ToCString(ctx, jsvKey, &stringBuffer);
+                    const char *value = JS_ToCString(ctx, jsvValue, &stringBuffer);
+                    http.addHeader(key ? key : "", value ? value : "");
                 }
             }
         }
@@ -131,63 +132,70 @@ JSValue native_httpFetch(JSContext *ctx, JSValue *this_val, int argc, JSValue *a
     uint8_t returnResponseType = 0; // 0 = string
 
     if (argc > 1 && JS_IsObject(ctx, argv[1])) {
-        JSValue v = JS_GetPropertyStr(ctx, argv[1], "body");
-        if (!JS_IsUndefined(v)) {
-            if (JS_IsString(ctx, v) || JS_IsNumber(ctx, v) || JS_IsBool(v)) {
-                JSCStringBuf bb;
-                bodyRequest = JS_ToCString(ctx, v, &bb);
-            } else if (JS_IsObject(ctx, v)) {
-                const char *src = "(function(o){return JSON.stringify(o);})";
-                JSValue fn = JS_Eval(ctx, src, strlen(src), "<json_stringify>", 0);
-                if (!JS_IsException(fn)) {
-                    JS_PushArg(ctx, v);
-                    JS_PushArg(ctx, fn);
-                    JS_PushArg(ctx, JS_NULL);
-                    JSValue s = JS_Call(ctx, 1);
-                    if (!JS_IsException(s) && JS_IsString(ctx, s)) {
-                        JSCStringBuf sb;
-                        bodyRequest = JS_ToCString(ctx, s, &sb);
+        JSValue jsvBody = JS_GetPropertyStr(ctx, argv[1], "body");
+        if (!JS_IsUndefined(jsvBody)) {
+            if (JS_IsString(ctx, jsvBody) || JS_IsNumber(ctx, jsvBody) || JS_IsBool(jsvBody)) {
+                bodyRequest = JS_ToCString(ctx, jsvBody, &stringBuffer);
+            } else if (JS_IsObject(ctx, jsvBody)) {
+                JSValue global = JS_GetGlobalObject(ctx);
+                JSValue json = JS_GetPropertyStr(ctx, global, "JSON");
+                JSValue stringify = JS_GetPropertyStr(ctx, json, "stringify");
+                if (JS_IsFunction(ctx, stringify)) {
+                    JS_PushArg(ctx, jsvBody);
+                    JS_PushArg(ctx, stringify);
+                    JS_PushArg(ctx, json);
+                    JSValue jsvBodyRequest = JS_Call(ctx, 1);
+                    if (!JS_IsException(jsvBodyRequest) &&
+                        (JS_IsString(ctx, jsvBodyRequest) || JS_IsNumber(ctx, jsvBodyRequest) ||
+                         JS_IsBool(jsvBodyRequest))) {
+                        bodyRequest = JS_ToCString(ctx, jsvBodyRequest, &stringBuffer);
                     }
                 }
             }
             bodyRequestLength = bodyRequest == NULL ? 0U : strlen(bodyRequest);
         }
 
-        v = JS_GetPropertyStr(ctx, argv[1], "method");
-        if (!JS_IsUndefined(v) && JS_IsString(ctx, v)) {
-            JSCStringBuf mb;
-            requestType = JS_ToCString(ctx, v, &mb);
+        jsvBody = JS_GetPropertyStr(ctx, argv[1], "method");
+        if (!JS_IsUndefined(jsvBody) && JS_IsString(ctx, jsvBody)) {
+            requestType = JS_ToCString(ctx, jsvBody, &stringBuffer);
         }
 
-        v = JS_GetPropertyStr(ctx, argv[1], "responseType");
-        if (!JS_IsUndefined(v) && JS_IsString(ctx, v)) {
-            JSCStringBuf rb;
-            const char *rts = JS_ToCString(ctx, v, &rb);
+        jsvBody = JS_GetPropertyStr(ctx, argv[1], "responseType");
+        if (!JS_IsUndefined(jsvBody) && JS_IsString(ctx, jsvBody)) {
+            const char *rts = JS_ToCString(ctx, jsvBody, &stringBuffer);
             returnResponseType = (strcmp(rts ? rts : "string", "string") == 0) ? 0 : 1;
         }
 
         // headers inside options
-        v = JS_GetPropertyStr(ctx, argv[1], "headers");
-        if (!JS_IsUndefined(v)) {
-            if (JS_GetClassID(ctx, v) == JS_CLASS_ARRAY) {
-                JSValue l = JS_GetPropertyStr(ctx, v, "length");
+        jsvBody = JS_GetPropertyStr(ctx, argv[1], "headers");
+        if (!JS_IsUndefined(jsvBody)) {
+            if (JS_GetClassID(ctx, jsvBody) == JS_CLASS_ARRAY) {
+                JSValue l = JS_GetPropertyStr(ctx, jsvBody, "length");
                 if (JS_IsNumber(ctx, l)) {
                     uint32_t len = 0;
                     JS_ToUint32(ctx, &len, l);
                     for (uint32_t i = 0; i + 1 < len; i += 2) {
-                        JSValue k = JS_GetPropertyUint32(ctx, v, i);
-                        JSValue vv = JS_GetPropertyUint32(ctx, v, i + 1);
-                        if (JS_IsString(ctx, k) && JS_IsString(ctx, vv)) {
-                            JSCStringBuf kb, vb;
-                            const char *ks = JS_ToCString(ctx, k, &kb);
-                            const char *vs = JS_ToCString(ctx, vv, &vb);
-                            http.addHeader(ks ? ks : "", vs ? vs : "");
+                        JSValue jsvKey = JS_GetPropertyUint32(ctx, jsvBody, i);
+                        JSValue jsvValue = JS_GetPropertyUint32(ctx, jsvBody, i + 1);
+                        if (JS_IsString(ctx, jsvKey) && JS_IsString(ctx, jsvValue)) {
+                            const char *key = JS_ToCString(ctx, jsvKey, &stringBuffer);
+                            const char *value = JS_ToCString(ctx, jsvValue, &stringBuffer);
+                            http.addHeader(key ? key : "", value ? value : "");
                         }
                     }
                 }
-            } else if (JS_IsObject(ctx, v)) {
-                // TODO: Change to use JS_GetOwnPropertyByIndex
-                return JS_ThrowTypeError(ctx, "dialogChoice: failed to enumerate object keys");
+            } else if (JS_IsObject(ctx, jsvBody)) {
+                uint32_t prop_count = 0;
+                for (uint32_t index = 0;; ++index) {
+                    const char *key = JS_GetOwnPropertyByIndex(ctx, index, &prop_count, jsvBody);
+                    if (key == NULL) break;
+                    JSValue hv = JS_GetPropertyStr(ctx, jsvBody, key);
+                    if (!JS_IsUndefined(hv) &&
+                        (JS_IsString(ctx, hv) || JS_IsNumber(ctx, hv) || JS_IsBool(hv))) {
+                        const char *val = JS_ToCString(ctx, hv, &stringBuffer);
+                        http.addHeader(key, val ? val : "");
+                    }
+                }
             }
         }
     }

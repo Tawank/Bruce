@@ -402,6 +402,7 @@ static const JSPropDef js_dialog[] = {
     JS_CFUNC_DEF("warning", 2, native_dialogWarning),
     JS_CFUNC_DEF("error", 2, native_dialogError),
     JS_CFUNC_DEF("choice", 1, native_dialogChoice),
+    JS_CFUNC_DEF("prompt", 3, native_keyboard),
     JS_CFUNC_DEF("pickFile", 2, native_dialogPickFile),
     JS_CFUNC_DEF("viewFile", 1, native_dialogViewFile),
     JS_CFUNC_DEF("viewText", 2, native_dialogViewText),

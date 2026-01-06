@@ -1,5 +1,6 @@
 #if !defined(LITE_VERSION) && !defined(DISABLE_INTERPRETER)
 #include "interpreter.h"
+#include "core/utils.h"
 
 static void js_log_func(void *opaque, const void *buf, size_t buf_len) { fwrite(buf, 1, buf_len, stdout); }
 
@@ -74,6 +75,8 @@ void interpreterHandler(void *pvParameters) {
 
     // Clean up.
     clearDisplayModuleData();
+    // TODO: if backgroud app implemented, store in ctx and set if on foreground/background
+    LongPress = false;
 
     interpreter_start = false;
     vTaskDelete(NULL);
@@ -94,7 +97,7 @@ void run_bjs_script() {
         loopOptions(options);
     }
     filename = loopSD(*fs, true, "BJS|JS");
-    script = readBigFile(*fs, filename);
+    script = readBigFile(fs, filename);
     if (script == NULL) { return; }
 
     returnToMenu = true;
@@ -114,7 +117,7 @@ bool run_bjs_script_headless(char *code) {
 }
 
 bool run_bjs_script_headless(FS fs, String filename) {
-    script = readBigFile(fs, filename);
+    script = readBigFile(&fs, filename);
     if (script == NULL) { return false; }
 
     int slash = filename.lastIndexOf('/');

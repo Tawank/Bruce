@@ -73,7 +73,7 @@ JSValue native_storageRead(JSContext *ctx, JSValue *this_val, int argc, JSValue 
     }
     if (!fileParams.path.startsWith("/")) fileParams.path = "/" + fileParams.path;
 
-    fileContent = readBigFile(*fileParams.fs, fileParams.path, binary, &fileSize);
+    fileContent = readBigFile(fileParams.fs, fileParams.path, binary, &fileSize);
     if (fileContent == NULL) {
         return JS_ThrowTypeError(ctx, "%s: Could not read file: %s", "storageRead", fileParams.path.c_str());
     }
@@ -127,7 +127,7 @@ JSValue native_storageWrite(JSContext *ctx, JSValue *this_val, int argc, JSValue
         }
     } else if (argc > 3 && JS_IsString(ctx, argv[3])) {
         size_t tmpSize = 0;
-        char *fileContent = readBigFile(*fileParams.fs, fileParams.path, false, &tmpSize);
+        char *fileContent = readBigFile(fileParams.fs, fileParams.path, false, &tmpSize);
         if (fileContent == NULL) {
             file.close();
             return JS_ThrowTypeError(

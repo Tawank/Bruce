@@ -108,31 +108,62 @@ JSValue native_dialogPickFile(JSContext *ctx, JSValue *this_val, int argc, JSVal
 }
 
 JSValue native_dialogChoice(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    // usage: dialogChoice(choices : string[] | {[key: string]: string})
+    // usage: dialogChoice(choices : string[] | [key: string, value: string][] | {[key: string]: string})
     // returns: string or empty string
     const char *result = "";
-    bool legacy = false; // legacy support not implemented for now
-
-    if (argc < 1 || !JS_IsObject(ctx, argv[0]))
+    if (argc < 1 || !JS_IsObject(ctx, argv[0])) {
         return JS_ThrowTypeError(ctx, "dialogChoice: Choice argument must be object or array.");
-    options = {};
-    bool arg0IsArray = (JS_GetClassID(ctx, argv[0]) == JS_CLASS_ARRAY);
+    }
+    options.clear();
 
-    if (arg0IsArray) {
-        uint32_t len = 0;
+    if (JS_GetClassID(ctx, argv[0]) == JS_CLASS_ARRAY) {
+        uint32_t arrayLength = 0;
         JSValue l = JS_GetPropertyStr(ctx, argv[0], "length");
-        if (JS_IsNumber(ctx, l)) JS_ToUint32(ctx, &len, l);
-        for (uint32_t i = 0; i < len; ++i) {
-            JSValue v = JS_GetPropertyUint32(ctx, argv[0], i);
-            if (JS_IsString(ctx, v)) {
+        if (JS_IsNumber(ctx, l)) { JS_ToUint32(ctx, &arrayLength, l); }
+
+        for (uint32_t i = 0; i < arrayLength; ++i) {
+            JSValue jsvChoice = JS_GetPropertyUint32(ctx, argv[0], i);
+
+            if (JS_IsString(ctx, jsvChoice)) {
                 JSCStringBuf sb;
-                const char *s = JS_ToCString(ctx, v, &sb);
+                const char *s = JS_ToCString(ctx, jsvChoice, &sb);
                 options.push_back({s, [&result, s]() { result = s; }});
+            } else if (JS_GetClassID(ctx, jsvChoice) == JS_CLASS_ARRAY) {
+                /* element is expected to be [key, value] */
+                JSValue jsvInnerArrayLength = JS_GetPropertyStr(ctx, jsvChoice, "length");
+                uint32_t innerArrayLength = 0;
+                if (JS_IsNumber(ctx, jsvInnerArrayLength)) {
+                    JS_ToUint32(ctx, &innerArrayLength, jsvInnerArrayLength);
+                }
+                if (innerArrayLength >= 2) {
+                    JSValue jsvKey = JS_GetPropertyUint32(ctx, jsvChoice, 0);
+                    JSValue jsvValue = JS_GetPropertyUint32(ctx, jsvChoice, 1);
+                    if (JS_IsString(ctx, jsvKey) && JS_IsString(ctx, jsvValue)) {
+                        JSCStringBuf sb;
+                        const char *key = JS_ToCString(ctx, jsvKey, &sb);
+                        const char *value = JS_ToCString(ctx, jsvValue, &sb);
+                        options.push_back({key, [value, &result]() { result = value; }});
+                    }
+                }
             }
         }
-    } else {
-        // TODO: Change to use JS_GetOwnPropertyByIndex
-        return JS_ThrowTypeError(ctx, "dialogChoice: failed to enumerate object keys");
+    } else if (JS_IsObject(ctx, argv[0])) {
+        /* element is expected to be {key: value} */
+        log_d("element is expected to be {key: value}");
+        uint32_t prop_count = 0;
+        for (uint32_t index = 0;; ++index) {
+            log_d("index: %d", index);
+            const char *key = JS_GetOwnPropertyByIndex(ctx, index, &prop_count, argv[0]);
+            if (key == NULL) break;
+            log_d("key: %s", key);
+            log_d("prop_count: %d", prop_count);
+            JSValue jsvVal = JS_GetPropertyStr(ctx, argv[0], key);
+            if (JS_IsString(ctx, jsvVal)) {
+                JSCStringBuf sb;
+                const char *val = JS_ToCString(ctx, jsvVal, &sb);
+                options.push_back({key, [val, &result]() { result = val; }});
+            }
+        }
     }
 
     loopOptions(options, MENU_TYPE_REGULAR, "", 0, true);
