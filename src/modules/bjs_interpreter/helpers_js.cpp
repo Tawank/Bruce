@@ -118,4 +118,56 @@ FileParamsJS js_get_path_from_params(JSContext *ctx, JSValue *argv, bool checkIf
     return filePath;
 }
 
+void internal_print(
+    JSContext *ctx, JSValue *this_val, int argc, JSValue *argv, uint8_t printTft, uint8_t newLine
+) {
+    int maxArgs = argc;
+    if (maxArgs > 20) maxArgs = 20;
+    for (int i = 0; i < maxArgs; ++i) {
+        JSValue jsvValue = argv[i];
+        if (JS_IsUndefined(jsvValue)) break;
+        if (i > 0) {
+            if (printTft) tft.print(" ");
+            Serial.print(" ");
+        }
+
+        if (JS_IsUndefined(jsvValue)) {
+            if (printTft) tft.print("undefined");
+            Serial.print("undefined");
+
+        } else if (JS_IsNull(jsvValue)) {
+            if (printTft) tft.print("null");
+            Serial.print("null");
+
+        } else if (JS_IsNumber(ctx, jsvValue)) {
+            double numberValue = 0.0;
+            JS_ToNumber(ctx, &numberValue, jsvValue);
+            if (printTft) tft.printf("%g", numberValue);
+            Serial.printf("%g", numberValue);
+
+        } else if (JS_IsBool(jsvValue)) {
+            bool b = JS_ToBool(ctx, jsvValue);
+            const char *boolValue = b ? "true" : "false";
+            if (printTft) tft.print(boolValue);
+            Serial.print(boolValue);
+
+        } else {
+            JSCStringBuf sb;
+            const char *s = JS_ToCString(ctx, jsvValue, &sb);
+            if (s) {
+                if (printTft) tft.print(s);
+                Serial.print(s);
+            } else {
+                /* fallback */
+                JS_PrintValueF(ctx, jsvValue, JS_DUMP_LONG);
+            }
+        }
+    }
+
+    if (newLine) {
+        if (printTft) tft.println();
+        Serial.println();
+    }
+}
+
 #endif

@@ -412,8 +412,10 @@ void setup() {
     init_clock();
     init_led();
 
+    options.reserve(20); // preallocate some options space to avoid fragmentation
+
     // Set WiFi country to avoid warnings and ensure max power
-    wifi_country_t country = {
+    const wifi_country_t country = {
         .cc = "US",
         .schan = 1,
         .nchan = 14,

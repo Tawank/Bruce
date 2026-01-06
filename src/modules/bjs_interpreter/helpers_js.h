@@ -25,5 +25,9 @@ struct FileParamsJS {
 FileParamsJS
 js_get_path_from_params(JSContext *ctx, JSValue *argv, bool checkIfexist = true, bool legacy = false);
 
+void internal_print(
+    JSContext *ctx, JSValue *this_val, int argc, JSValue *argv, uint8_t printTft, uint8_t newLine
+);
+
 #endif
 #endif

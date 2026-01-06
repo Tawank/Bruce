@@ -58,8 +58,7 @@ void native_sprite_finalizer(JSContext *ctx, void *opaque) {
 }
 
 #if defined(HAS_SCREEN)
-static inline TFT_eSPI *get_display(JSContext *ctx, JSValue *this_val) __attribute__((always_inline));
-static inline TFT_eSPI *get_display(JSContext *ctx, JSValue *this_val) {
+static TFT_eSPI *get_display(JSContext *ctx, JSValue *this_val) {
     if (this_val && JS_IsObject(ctx, *this_val)) {
         JSValue v = JS_GetPropertyStr(ctx, *this_val, "spritePointer");
         if (!JS_IsUndefined(v)) {
@@ -74,9 +73,7 @@ static inline TFT_eSPI *get_display(JSContext *ctx, JSValue *this_val) {
     return reinterpret_cast<TFT_eSPI *>(&tft);
 }
 #else
-static inline SerialDisplayClass *get_display(JSContext *ctx, JSValue *this_val)
-    __attribute__((always_inline));
-static inline SerialDisplayClass *get_display(JSContext *ctx, JSValue *this_val) {
+static SerialDisplayClass *get_display(JSContext *ctx, JSValue *this_val) {
     return static_cast<SerialDisplayClass *>(&tft);
 }
 #endif
@@ -291,7 +288,8 @@ JSValue native_drawXBitmap(JSContext *ctx, JSValue *this_val, int argc, JSValue 
 }
 
 JSValue native_drawString(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    if (argc > 0 && JS_IsString(ctx, argv[0])) {
+    if (argc > 0 && (JS_IsString(ctx, argv[0]) || JS_IsNumber(ctx, argv[0]) || JS_IsBool(argv[0]) ||
+                     JS_IsObject(ctx, argv[0]))) {
         JSCStringBuf sb;
         const char *s = JS_ToCString(ctx, argv[0], &sb);
         int x = 0, y = 0;
