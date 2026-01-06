@@ -130,28 +130,36 @@ JSValue native_setTextAlign(JSContext *ctx, JSValue *this_val, int argc, JSValue
 }
 
 JSValue native_drawRect(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    int a = 0, b = 0, c = 0, d = 0, e = 0;
-    if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &a, argv[0]);
-    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &b, argv[1]);
-    if (argc > 2 && JS_IsNumber(ctx, argv[2])) JS_ToInt32(ctx, &c, argv[2]);
-    if (argc > 3 && JS_IsNumber(ctx, argv[3])) JS_ToInt32(ctx, &d, argv[3]);
-    if (argc > 4 && JS_IsNumber(ctx, argv[4])) JS_ToInt32(ctx, &e, argv[4]);
-    get_display(ctx, this_val)->drawRect(a, b, c, d, e);
+    int x = 0, y = 0, w = 0, h = 0, color = 0;
+    if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &x, argv[0]);
+    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &y, argv[1]);
+    if (argc > 2 && JS_IsNumber(ctx, argv[2])) JS_ToInt32(ctx, &w, argv[2]);
+    if (argc > 3 && JS_IsNumber(ctx, argv[3])) JS_ToInt32(ctx, &h, argv[3]);
+    if (argc > 4 && JS_IsNumber(ctx, argv[4])) JS_ToInt32(ctx, &color, argv[4]);
+    get_display(ctx, this_val)->drawRect(x, y, w, h, color);
     return JS_UNDEFINED;
 }
 
 JSValue native_drawFillRect(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    int a = 0, b = 0, c = 0, d = 0, e = 0;
-    if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &a, argv[0]);
-    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &b, argv[1]);
-    if (argc > 2 && JS_IsNumber(ctx, argv[2])) JS_ToInt32(ctx, &c, argv[2]);
-    if (argc > 3 && JS_IsNumber(ctx, argv[3])) JS_ToInt32(ctx, &d, argv[3]);
-    if (argc > 4 && JS_IsNumber(ctx, argv[4])) JS_ToInt32(ctx, &e, argv[4]);
-    get_display(ctx, this_val)->fillRect(a, b, c, d, e);
+    int x = 0, y = 0, w = 0, h = 0, color = 0;
+    if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &x, argv[0]);
+    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &y, argv[1]);
+    if (argc > 2 && JS_IsNumber(ctx, argv[2])) JS_ToInt32(ctx, &w, argv[2]);
+    if (argc > 3 && JS_IsNumber(ctx, argv[3])) JS_ToInt32(ctx, &h, argv[3]);
+    if (argc > 4 && JS_IsNumber(ctx, argv[4])) JS_ToInt32(ctx, &color, argv[4]);
+    get_display(ctx, this_val)->fillRect(x, y, w, h, color);
     return JS_UNDEFINED;
 }
 
 JSValue native_drawFillRectGradient(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+    int x = 0, y = 0, w = 0, h = 0, c1 = 0, c2 = 0;
+    if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &x, argv[0]);
+    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &y, argv[1]);
+    if (argc > 2 && JS_IsNumber(ctx, argv[2])) JS_ToInt32(ctx, &w, argv[2]);
+    if (argc > 3 && JS_IsNumber(ctx, argv[3])) JS_ToInt32(ctx, &h, argv[3]);
+    if (argc > 4 && JS_IsNumber(ctx, argv[4])) JS_ToInt32(ctx, &c1, argv[4]);
+    if (argc > 5 && JS_IsNumber(ctx, argv[5])) JS_ToInt32(ctx, &c2, argv[5]);
+
 #if defined(HAS_SCREEN)
     char mode = 'h';
     if (argc > 6 && JS_IsString(ctx, argv[6])) {
@@ -159,92 +167,79 @@ JSValue native_drawFillRectGradient(JSContext *ctx, JSValue *this_val, int argc,
         const char *s = JS_ToCString(ctx, argv[6], &sb);
         if (s) mode = s[0];
     }
-    int a = 0, b = 0, c = 0, d = 0, e = 0, f = 0;
-    if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &a, argv[0]);
-    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &b, argv[1]);
-    if (argc > 2 && JS_IsNumber(ctx, argv[2])) JS_ToInt32(ctx, &c, argv[2]);
-    if (argc > 3 && JS_IsNumber(ctx, argv[3])) JS_ToInt32(ctx, &d, argv[3]);
-    if (argc > 4 && JS_IsNumber(ctx, argv[4])) JS_ToInt32(ctx, &e, argv[4]);
-    if (argc > 5 && JS_IsNumber(ctx, argv[5])) JS_ToInt32(ctx, &f, argv[5]);
     if (mode == 'h') {
-        get_display(ctx, this_val)->fillRectHGradient(a, b, c, d, e, f);
+        get_display(ctx, this_val)->fillRectHGradient(x, y, w, h, c1, c2);
     } else {
-        get_display(ctx, this_val)->fillRectVGradient(a, b, c, d, e, f);
+        get_display(ctx, this_val)->fillRectVGradient(x, y, w, h, c1, c2);
     }
 #else
-    int sprite = get_sprite_index(ctx, this_val, argc, argv);
-    int a = 0, b = 0, c = 0, d = 0, e = 0;
-    if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &a, argv[0]);
-    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &b, argv[1]);
-    if (argc > 2 && JS_IsNumber(ctx, argv[2])) JS_ToInt32(ctx, &c, argv[2]);
-    if (argc > 3 && JS_IsNumber(ctx, argv[3])) JS_ToInt32(ctx, &d, argv[3]);
-    if (argc > 4 && JS_IsNumber(ctx, argv[4])) JS_ToInt32(ctx, &e, argv[4]);
-    get_display(ctx, this_val)->fillRect(a, b, c, d, e);
+    get_display(ctx, this_val)->fillRect(x, y, w, h, c1);
 #endif
+
     return JS_UNDEFINED;
 }
 
 JSValue native_drawRoundRect(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    int a = 0, b = 0, c = 0, d = 0, e = 0, f = 0;
-    if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &a, argv[0]);
-    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &b, argv[1]);
-    if (argc > 2 && JS_IsNumber(ctx, argv[2])) JS_ToInt32(ctx, &c, argv[2]);
-    if (argc > 3 && JS_IsNumber(ctx, argv[3])) JS_ToInt32(ctx, &d, argv[3]);
-    if (argc > 4 && JS_IsNumber(ctx, argv[4])) JS_ToInt32(ctx, &e, argv[4]);
-    if (argc > 5 && JS_IsNumber(ctx, argv[5])) JS_ToInt32(ctx, &f, argv[5]);
-    get_display(ctx, this_val)->drawRoundRect(a, b, c, d, e, f);
+    int x = 0, y = 0, w = 0, h = 0, r = 0, c = 0;
+    if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &x, argv[0]);
+    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &y, argv[1]);
+    if (argc > 2 && JS_IsNumber(ctx, argv[2])) JS_ToInt32(ctx, &w, argv[2]);
+    if (argc > 3 && JS_IsNumber(ctx, argv[3])) JS_ToInt32(ctx, &h, argv[3]);
+    if (argc > 4 && JS_IsNumber(ctx, argv[4])) JS_ToInt32(ctx, &r, argv[4]);
+    if (argc > 5 && JS_IsNumber(ctx, argv[5])) JS_ToInt32(ctx, &c, argv[5]);
+    get_display(ctx, this_val)->drawRoundRect(x, y, w, h, r, c);
     return JS_UNDEFINED;
 }
 
 JSValue native_drawFillRoundRect(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    int a = 0, b = 0, c = 0, d = 0, e = 0, f = 0;
-    if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &a, argv[0]);
-    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &b, argv[1]);
-    if (argc > 2 && JS_IsNumber(ctx, argv[2])) JS_ToInt32(ctx, &c, argv[2]);
-    if (argc > 3 && JS_IsNumber(ctx, argv[3])) JS_ToInt32(ctx, &d, argv[3]);
-    if (argc > 4 && JS_IsNumber(ctx, argv[4])) JS_ToInt32(ctx, &e, argv[4]);
-    if (argc > 5 && JS_IsNumber(ctx, argv[5])) JS_ToInt32(ctx, &f, argv[5]);
-    get_display(ctx, this_val)->fillRoundRect(a, b, c, d, e, f);
+    int x = 0, y = 0, w = 0, h = 0, r = 0, c = 0;
+    if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &x, argv[0]);
+    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &y, argv[1]);
+    if (argc > 2 && JS_IsNumber(ctx, argv[2])) JS_ToInt32(ctx, &w, argv[2]);
+    if (argc > 3 && JS_IsNumber(ctx, argv[3])) JS_ToInt32(ctx, &h, argv[3]);
+    if (argc > 4 && JS_IsNumber(ctx, argv[4])) JS_ToInt32(ctx, &r, argv[4]);
+    if (argc > 5 && JS_IsNumber(ctx, argv[5])) JS_ToInt32(ctx, &c, argv[5]);
+    get_display(ctx, this_val)->fillRoundRect(x, y, w, h, r, c);
     return JS_UNDEFINED;
 }
 
 JSValue native_drawCircle(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    int a = 0, b = 0, c = 0, d = 0;
-    if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &a, argv[0]);
-    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &b, argv[1]);
-    if (argc > 2 && JS_IsNumber(ctx, argv[2])) JS_ToInt32(ctx, &c, argv[2]);
-    if (argc > 3 && JS_IsNumber(ctx, argv[3])) JS_ToInt32(ctx, &d, argv[3]);
-    get_display(ctx, this_val)->drawCircle(a, b, c, d);
+    int x = 0, y = 0, r = 0, c = 0;
+    if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &x, argv[0]);
+    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &y, argv[1]);
+    if (argc > 2 && JS_IsNumber(ctx, argv[2])) JS_ToInt32(ctx, &r, argv[2]);
+    if (argc > 3 && JS_IsNumber(ctx, argv[3])) JS_ToInt32(ctx, &c, argv[3]);
+    get_display(ctx, this_val)->drawCircle(x, y, r, c);
     return JS_UNDEFINED;
 }
 
 JSValue native_drawFillCircle(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    int a = 0, b = 0, c = 0, d = 0;
-    if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &a, argv[0]);
-    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &b, argv[1]);
-    if (argc > 2 && JS_IsNumber(ctx, argv[2])) JS_ToInt32(ctx, &c, argv[2]);
-    if (argc > 3 && JS_IsNumber(ctx, argv[3])) JS_ToInt32(ctx, &d, argv[3]);
-    get_display(ctx, this_val)->fillCircle(a, b, c, d);
+    int x = 0, y = 0, r = 0, c = 0;
+    if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &x, argv[0]);
+    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &y, argv[1]);
+    if (argc > 2 && JS_IsNumber(ctx, argv[2])) JS_ToInt32(ctx, &r, argv[2]);
+    if (argc > 3 && JS_IsNumber(ctx, argv[3])) JS_ToInt32(ctx, &c, argv[3]);
+    get_display(ctx, this_val)->fillCircle(x, y, r, c);
     return JS_UNDEFINED;
 }
 
 JSValue native_drawLine(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    int a = 0, b = 0, c = 0, d = 0, e = 0;
-    if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &a, argv[0]);
-    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &b, argv[1]);
-    if (argc > 2 && JS_IsNumber(ctx, argv[2])) JS_ToInt32(ctx, &c, argv[2]);
-    if (argc > 3 && JS_IsNumber(ctx, argv[3])) JS_ToInt32(ctx, &d, argv[3]);
-    if (argc > 4 && JS_IsNumber(ctx, argv[4])) JS_ToInt32(ctx, &e, argv[4]);
-    get_display(ctx, this_val)->drawLine(a, b, c, d, e);
+    int xs = 0, ys = 0, xe = 0, ye = 0, c = 0;
+    if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &xs, argv[0]);
+    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &ys, argv[1]);
+    if (argc > 2 && JS_IsNumber(ctx, argv[2])) JS_ToInt32(ctx, &xe, argv[2]);
+    if (argc > 3 && JS_IsNumber(ctx, argv[3])) JS_ToInt32(ctx, &ye, argv[3]);
+    if (argc > 4 && JS_IsNumber(ctx, argv[4])) JS_ToInt32(ctx, &c, argv[4]);
+    get_display(ctx, this_val)->drawLine(xs, ys, xe, ye, c);
     return JS_UNDEFINED;
 }
 
 JSValue native_drawPixel(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    int a = 0, b = 0, c = 0;
-    if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &a, argv[0]);
-    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &b, argv[1]);
+    int x = 0, y = 0, c = 0;
+    if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &x, argv[0]);
+    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &y, argv[1]);
     if (argc > 2 && JS_IsNumber(ctx, argv[2])) JS_ToInt32(ctx, &c, argv[2]);
-    get_display(ctx, this_val)->drawPixel(a, b, c);
+    get_display(ctx, this_val)->drawPixel(x, y, c);
     return JS_UNDEFINED;
 }
 
@@ -340,14 +335,12 @@ JSValue native_fillScreen(JSContext *ctx, JSValue *this_val, int argc, JSValue *
 }
 
 JSValue native_width(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    int width = 0;
-    width = get_display(ctx, this_val)->width();
+    int width = get_display(ctx, this_val)->width();
     return JS_NewInt32(ctx, width);
 }
 
 JSValue native_height(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    int height = 0;
-    height = get_display(ctx, this_val)->height();
+    int height = get_display(ctx, this_val)->height();
     return JS_NewInt32(ctx, height);
 }
 
