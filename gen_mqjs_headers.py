@@ -20,9 +20,10 @@ SRC = [
 CFLAGS = [
     "-Wall",
     "-O2",
-    "-m32",
     "-I" + MQJS_PATH,
 ]
+
+HOST_CC = "gcc"
 
 INCLUDES = [
     'user_classes_js',
@@ -71,7 +72,7 @@ def _normalize_option_value(value) -> str:
 def compute_signature():
     # Any change here should force a rebuild.
     parts = []
-    parts.append("v=2")
+    parts.append("v=3")
     parts.append(f"PIOENV={PIOENV}")
     parts.append(f"build_flags={_normalize_option_value(_project_option('build_flags'))}")
     parts.append(f"build_src_flags={_normalize_option_value(_project_option('build_src_flags'))}")
@@ -112,9 +113,11 @@ def generate_headers():
     if not needs_rebuild():
         return
 
-    subprocess.check_call(["gcc", *CFLAGS, "-o", GEN, *SRC])
+    # Build the generator as a native host executable. The output headers are
+    # still forced to 32-bit target format via the generator's `-m32` flag.
+    subprocess.check_call([HOST_CC, *CFLAGS, "-o", GEN, *SRC])
 
-    print("gen_mqjs_headers.py Generating 32-bit QuickJS headers for ESP32")
+    print("gen_mqjs_headers.py Generating QuickJS headers for 32-bit targets")
 
     with open("src/modules/bjs_interpreter/mqjs_stdlib.h", "w") as f:
         result = subprocess.run([GEN, "-m32"], capture_output=True, text=True, check=True)
