@@ -80,8 +80,6 @@ def compute_signature():
     mqjs_build_c = os.path.join(MQJS_PATH, "mquickjs_build.c")
     if os.path.exists(mqjs_build_c):
         parts.append(f"mquickjs_build_sha256={sha256_file(mqjs_build_c)}")
-    else:
-        parts.append("mquickjs_build_sha256=")
 
     h = hashlib.sha256()
     h.update("\n".join(parts).encode("utf-8"))
@@ -118,8 +116,8 @@ def generate_headers():
 
     print("gen_mqjs_headers.py Generating 32-bit QuickJS headers for ESP32")
 
-    result = subprocess.run([GEN, "-m32"], capture_output=True, text=True, check=True)
     with open("src/modules/bjs_interpreter/mqjs_stdlib.h", "w") as f:
+        result = subprocess.run([GEN, "-m32"], capture_output=True, text=True, check=True)
         for line in INCLUDES:
             f.write(f'#include "{line}.h"\n')
         f.write("\n")
