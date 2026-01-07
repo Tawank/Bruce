@@ -6,8 +6,6 @@
 #include "keyboard_js.h"
 #include "user_classes_js.h"
 
-#include <stdlib.h>
-
 typedef struct {
     ScrollableTextArea *area;
 } TextViewerData;

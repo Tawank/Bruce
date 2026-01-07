@@ -21,21 +21,23 @@ JSValue native_color(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv)
     }
 }
 
+#if defined(HAS_SCREEN)
 typedef struct {
     TFT_eSprite *sprite;
 } SpriteData;
+#endif
 
 /* Finalizer called by mquickjs when a Sprite JS object is freed. */
 void native_sprite_finalizer(JSContext *ctx, void *opaque) {
+#if defined(HAS_SCREEN)
     SpriteData *d = (SpriteData *)opaque;
     if (!d) return;
-#if defined(HAS_SCREEN)
     if (d->sprite) {
         delete d->sprite;
         d->sprite = NULL;
     }
-#endif
     free(d);
+#endif
 }
 
 #if defined(HAS_SCREEN)
@@ -299,6 +301,7 @@ JSValue native_println(JSContext *ctx, JSValue *this_val, int argc, JSValue *arg
 }
 
 JSValue native_fillScreen(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+#if defined(HAS_SCREEN)
     int c = 0;
     if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &c, argv[0]);
     if (this_val && JS_IsObject(ctx, *this_val)) {
@@ -313,6 +316,7 @@ JSValue native_fillScreen(JSContext *ctx, JSValue *this_val, int argc, JSValue *
         }
     }
     tft.fillScreen(c);
+#endif
     return JS_UNDEFINED;
 }
 
