@@ -386,7 +386,7 @@ JSValue native_gifPlayFrame(JSContext *ctx, JSValue *this_val, int argc, JSValue
 
     if (JS_GetClassID(ctx, *this_val) == JS_CLASS_GIF) {
         GifData *opaque = (GifData *)JS_GetOpaque(ctx, *this_val);
-        if (!opaque) return NULL;
+        if (!opaque) return JS_ThrowInternalError(ctx, "Invalid GIF object");
         Gif *gif = (Gif *)opaque->gif;
         if (gif) { result = gif->playFrame(x, y, bSync); }
     }
@@ -398,7 +398,7 @@ JSValue native_gifDimensions(JSContext *ctx, JSValue *this_val, int argc, JSValu
 #if !defined(LITE_VERSION)
     if (!this_val || !JS_IsObject(ctx, *this_val)) return JS_NewInt32(ctx, 0);
     GifData *opaque = (GifData *)JS_GetOpaque(ctx, *this_val);
-    if (!opaque) return NULL;
+    if (!opaque) return JS_ThrowInternalError(ctx, "Invalid GIF object");
     Gif *gif = (Gif *)opaque->gif;
     if (!gif) return JS_NewInt32(ctx, 0);
     int canvasWidth = gif->getCanvasWidth();
@@ -417,7 +417,7 @@ JSValue native_gifReset(JSContext *ctx, JSValue *this_val, int argc, JSValue *ar
 #if !defined(LITE_VERSION)
     if (this_val && JS_IsObject(ctx, *this_val)) {
         GifData *opaque = (GifData *)JS_GetOpaque(ctx, *this_val);
-        if (!opaque) return NULL;
+        if (!opaque) return JS_ThrowInternalError(ctx, "Invalid GIF object");
         Gif *gif = (Gif *)opaque->gif;
         if (gif) {
             gif->reset();
