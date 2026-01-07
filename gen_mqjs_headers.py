@@ -8,8 +8,7 @@ MQJS_PATH = os.path.join(".pio/libdeps", PIOENV, "mquickjs")
 
 BUILD_DIR = "mqjs_build"
 GEN = os.path.join(BUILD_DIR, "mqjs_stdlib")
-BUILD_STAMP = os.path.join(BUILD_DIR, ".mqjs_stdlib.build.stamp")
-HEADERS_STAMP = os.path.join(BUILD_DIR, ".mqjs_stdlib.headers.stamp")
+BUILD_SHA256 = os.path.join(BUILD_DIR, "mqjs_stdlib.build.sha256")
 
 WATCH_FILE = "src/modules/bjs_interpreter/mqjs_stdlib.c"
 
@@ -91,49 +90,33 @@ def compute_signature():
 def needs_rebuild():
     if not os.path.exists(GEN):
         return True
-    if not os.path.exists(BUILD_STAMP):
+    if not os.path.exists("src/modules/bjs_interpreter/mqjs_stdlib.h"):
+        return True
+    if not os.path.exists(BUILD_SHA256):
         return True
 
-    with open(BUILD_STAMP, "r") as f:
+    with open(BUILD_SHA256, "r") as f:
         old = f.read().strip()
 
+    print(old, compute_signature())
     return compute_signature() != old
 
 def write_build_stamp():
-    with open(BUILD_STAMP, "w") as f:
+    with open(BUILD_SHA256, "w") as f:
         f.write(compute_signature())
 
-def needs_headers_regen():
-    if not os.path.exists("src/modules/bjs_interpreter/mqjs_stdlib.h"):
-        return True
-    if not os.path.exists(HEADERS_STAMP):
-        return True
-    with open(HEADERS_STAMP, "r") as f:
-        old = f.read().strip()
-    return compute_signature() != old
-
-def write_headers_stamp():
-    with open(HEADERS_STAMP, "w") as f:
-        f.write(compute_signature())
-
-def build_generator():
+def generate_headers():
     if not os.path.exists(MQJS_PATH):
-        raise RuntimeError(f"mquickjs not found at {MQJS_PATH}")
+        return
 
     os.makedirs(BUILD_DIR, exist_ok=True)
 
-    if needs_rebuild():
-        print("Building mqjs_stdlib (host tool)")
-        # Important: do NOT forward PlatformIO build flags to host gcc.
-        # They can contain non-host-safe tokens and quoting, which breaks this build.
-        subprocess.check_call(["gcc", *CFLAGS, "-o", GEN, *SRC])
-        write_build_stamp()
-
-def generate_headers():
-    if not needs_headers_regen():
+    if not needs_rebuild():
         return
 
-    print("Generating 32-bit QuickJS headers for ESP32")
+    subprocess.check_call(["gcc", *CFLAGS, "-o", GEN, *SRC])
+
+    print("gen_mqjs_headers.py Generating 32-bit QuickJS headers for ESP32")
 
     result = subprocess.run([GEN, "-m32"], capture_output=True, text=True, check=True)
     with open("src/modules/bjs_interpreter/mqjs_stdlib.h", "w") as f:
@@ -145,7 +128,6 @@ def generate_headers():
     with open(os.path.join(MQJS_PATH, "mquickjs_atom.h"), "w") as f:
         subprocess.check_call([GEN, "-a", "-m32"], stdout=f)
 
-    write_headers_stamp()
+    write_build_stamp()
 
-build_generator()
 generate_headers()
