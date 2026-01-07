@@ -6,9 +6,8 @@
 #include "helpers_js.h"
 
 extern "C" {
-void clearDisplayModuleData();
-
 void native_sprite_finalizer(JSContext *ctx, void *opaque);
+void native_gif_finalizer(JSContext *ctx, void *opaque);
 
 JSValue native_color(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
 JSValue native_setTextColor(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);

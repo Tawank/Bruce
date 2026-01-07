@@ -257,4 +257,8 @@ JSValue native_to_upper_case(JSContext *ctx, JSValue *this_val, int argc, JSValu
     return JS_NewString(ctx, "");
 }
 
+JSValue native_exit(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+    return JS_ThrowInternalError(ctx, "Script exited");
+}
+
 #endif

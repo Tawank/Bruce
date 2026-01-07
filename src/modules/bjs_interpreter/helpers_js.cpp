@@ -13,22 +13,23 @@ void js_fatal_error_handler(JSContext *ctx) {
     tft.setCursor(0, 33);
 
     JSValue obj;
-    JSCStringBuf buf;
+    JSCStringBuf sb;
     obj = JS_GetException(ctx);
 
-    JSValue stackVal = JS_GetPropertyStr(ctx, obj, "stack");
+    JSValue jsvMessage = JS_GetPropertyStr(ctx, obj, "message");
+    if (strcmp(JS_ToCString(ctx, jsvMessage, &sb), "Script exited")) { return; }
 
-    JSCStringBuf sb;
+    JSValue jsvStack = JS_GetPropertyStr(ctx, obj, "stack");
     const char *stackTrace = NULL;
-    if (!JS_IsUndefined(stackVal) && JS_IsString(ctx, stackVal)) {
-        stackTrace = JS_ToCString(ctx, stackVal, &sb);
+    if (!JS_IsUndefined(jsvStack) && JS_IsString(ctx, jsvStack)) {
+        stackTrace = JS_ToCString(ctx, jsvStack, &sb);
     } else {
         /* fallback to exception's string representation */
         stackTrace = JS_ToCString(ctx, obj, &sb);
     }
 
     JS_PrintValueF(ctx, obj, JS_DUMP_LONG);
-    const char *msg = JS_ToCString(ctx, obj, &buf);
+    const char *msg = JS_ToCString(ctx, obj, &sb);
 
     tft.printf("%s\n%s\n", (msg != NULL ? msg : "JS Error"), stackTrace);
     Serial.printf("%s\n%s\n", (msg != NULL ? msg : "JS Error"), stackTrace);
@@ -36,9 +37,6 @@ void js_fatal_error_handler(JSContext *ctx) {
 
     delay(500);
     while (!check(AnyKeyPress)) delay(50);
-
-    // TODO: Check if we can recover from error instead of aborting
-    // abort();
 }
 
 bool JS_IsTypedArray(JSContext *ctx, JSValue val) {

@@ -6,6 +6,12 @@
 #include "keyboard_js.h"
 #include "user_classes_js.h"
 
+#include <stdlib.h>
+
+typedef struct {
+    ScrollableTextArea *area;
+} TextViewerData;
+
 JSValue native_dialogMessage(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
     const char *leftButton = NULL;
     const char *centerButton = NULL;
@@ -210,14 +216,11 @@ JSValue native_dialogViewText(JSContext *ctx, JSValue *this_val, int argc, JSVal
 }
 
 static ScrollableTextArea *getAreaPointer(JSContext *ctx, JSValue obj) {
-    ScrollableTextArea *area = NULL;
-    JSValue v = JS_GetPropertyStr(ctx, obj, "areaPointer");
-    if (!JS_IsUndefined(v) && JS_IsNumber(ctx, v)) {
-        int tmp = 0;
-        JS_ToInt32(ctx, &tmp, v);
-        area = reinterpret_cast<ScrollableTextArea *>((uintptr_t)tmp);
-    }
-    return area;
+    if (!JS_IsObject(ctx, obj)) return NULL;
+    if (JS_GetClassID(ctx, obj) != JS_CLASS_TEXTVIEWER) return NULL;
+    TextViewerData *d = (TextViewerData *)JS_GetOpaque(ctx, obj);
+    if (!d) return NULL;
+    return d->area;
 }
 
 JSValue native_dialogCreateTextViewerDraw(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
@@ -295,13 +298,20 @@ JSValue native_dialogCreateTextViewerFromString(JSContext *ctx, JSValue *this_va
 }
 
 JSValue native_dialogCreateTextViewerClose(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    ScrollableTextArea *area = NULL;
+    JSValue obj = JS_UNDEFINED;
     if (argc > 0 && JS_IsObject(ctx, argv[0])) {
-        area = getAreaPointer(ctx, argv[0]);
+        obj = argv[0];
     } else if (this_val && JS_IsObject(ctx, *this_val)) {
-        area = getAreaPointer(ctx, *this_val);
+        obj = *this_val;
     }
-    if (area != NULL) { delete area; }
+
+    if (!JS_IsObject(ctx, obj) || JS_GetClassID(ctx, obj) != JS_CLASS_TEXTVIEWER) return JS_UNDEFINED;
+
+    void *opaque = JS_GetOpaque(ctx, obj);
+    if (opaque) {
+        native_textviewer_finalizer(ctx, opaque);
+        JS_SetOpaque(ctx, obj, NULL);
+    }
     return JS_UNDEFINED;
 }
 
@@ -363,8 +373,13 @@ JSValue native_dialogCreateTextViewer(JSContext *ctx, JSValue *this_val, int arg
         return obj;
     }
 
-    JS_SetOpaque(ctx, obj, area);
-    JS_SetPropertyStr(ctx, obj, "areaPointer", JS_NewInt32(ctx, (int)(uintptr_t)area));
+    TextViewerData *d = (TextViewerData *)malloc(sizeof(TextViewerData));
+    if (!d) {
+        delete area;
+        return JS_ThrowOutOfMemory(ctx);
+    }
+    d->area = area;
+    JS_SetOpaque(ctx, obj, d);
 
     return obj;
 }
@@ -377,7 +392,12 @@ JSValue native_drawStatusBar(JSContext *ctx, JSValue *this_val, int argc, JSValu
 }
 
 void native_textviewer_finalizer(JSContext *ctx, void *opaque) {
-    ScrollableTextArea *area = (ScrollableTextArea *)opaque;
-    if (area) delete area;
+    TextViewerData *d = (TextViewerData *)opaque;
+    if (!d) return;
+    if (d->area) {
+        delete d->area;
+        d->area = NULL;
+    }
+    free(d);
 }
 #endif

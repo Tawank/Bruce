@@ -21,20 +21,9 @@ JSValue native_color(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv)
     }
 }
 
-static std::vector<TFT_eSprite *> sprites;
 typedef struct {
     TFT_eSprite *sprite;
 } SpriteData;
-
-void clearSpritesVector() {
-    for (auto s : sprites) {
-        if (s) {
-            delete s;
-            s = NULL;
-        }
-    }
-    sprites.clear();
-}
 
 /* Finalizer called by mquickjs when a Sprite JS object is freed. */
 void native_sprite_finalizer(JSContext *ctx, void *opaque) {
@@ -42,15 +31,7 @@ void native_sprite_finalizer(JSContext *ctx, void *opaque) {
     if (!d) return;
 #if defined(HAS_SCREEN)
     if (d->sprite) {
-        TFT_eSprite *p = d->sprite;
-        // clear any entry in the numeric sprites table
-        for (size_t i = 0; i < sprites.size(); ++i) {
-            if (sprites[i] == p) {
-                sprites[i] = NULL;
-                break;
-            }
-        }
-        delete p;
+        delete d->sprite;
         d->sprite = NULL;
     }
 #endif
@@ -60,13 +41,12 @@ void native_sprite_finalizer(JSContext *ctx, void *opaque) {
 #if defined(HAS_SCREEN)
 static TFT_eSPI *get_display(JSContext *ctx, JSValue *this_val) {
     if (this_val && JS_IsObject(ctx, *this_val)) {
-        JSValue v = JS_GetPropertyStr(ctx, *this_val, "spritePointer");
-        if (!JS_IsUndefined(v)) {
-            int tmp;
-            JS_ToInt32(ctx, &tmp, v);
-            int index = tmp - 1;
-            if (index >= 0 && index < (int)sprites.size() && sprites[index]) {
-                return reinterpret_cast<TFT_eSPI *>(sprites[index]);
+        int cid = JS_GetClassID(ctx, *this_val);
+        if (cid == JS_CLASS_SPRITE) {
+            void *opaque = JS_GetOpaque(ctx, *this_val);
+            if (opaque) {
+                SpriteData *d = (SpriteData *)opaque;
+                if (d->sprite) return reinterpret_cast<TFT_eSPI *>(d->sprite);
             }
         }
     }
@@ -322,9 +302,13 @@ JSValue native_fillScreen(JSContext *ctx, JSValue *this_val, int argc, JSValue *
     int c = 0;
     if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &c, argv[0]);
     if (this_val && JS_IsObject(ctx, *this_val)) {
-        JSValue v = JS_GetPropertyStr(ctx, *this_val, "spritePointer");
-        if (!JS_IsUndefined(v)) {
-            reinterpret_cast<TFT_eSprite *>(get_display(ctx, this_val))->fillSprite(c);
+        int cid = JS_GetClassID(ctx, *this_val);
+        if (cid == JS_CLASS_SPRITE) {
+            void *opaque = JS_GetOpaque(ctx, *this_val);
+            if (opaque) {
+                SpriteData *d = (SpriteData *)opaque;
+                if (d->sprite) reinterpret_cast<TFT_eSprite *>(d->sprite)->fillSprite(c);
+            }
             return JS_UNDEFINED;
         }
     }
@@ -354,8 +338,8 @@ JSValue native_drawJpg(JSContext *ctx, JSValue *this_val, int argc, JSValue *arg
     return JS_UNDEFINED;
 }
 
-#if !defined(LITE_VERSION)
 JSValue native_drawGif(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+#if !defined(LITE_VERSION)
     (void)this_val;
     FileParamsJS file = js_get_path_from_params(ctx, argv, true, true);
 
@@ -370,55 +354,52 @@ JSValue native_drawGif(JSContext *ctx, JSValue *this_val, int argc, JSValue *arg
     if (argc > base + 3 && JS_IsNumber(ctx, argv[base + 3])) JS_ToInt32(ctx, &playDurationMs, argv[base + 3]);
 
     showGif(file.fs, file.path.c_str(), x, y, center != 0, playDurationMs);
+#endif
     return JS_UNDEFINED;
 }
 
-static std::vector<Gif *> gifs;
-void clearGifsVector() {
-    for (auto gif : gifs) {
-        delete gif;
-        gif = NULL;
+#if !defined(LITE_VERSION)
+typedef struct {
+    Gif *gif;
+} GifData;
+#endif
+
+void native_gif_finalizer(JSContext *ctx, void *opaque) {
+#if !defined(LITE_VERSION)
+    GifData *d = (GifData *)opaque;
+    if (!d) return;
+    if (d->gif) {
+        delete d->gif;
+        d->gif = NULL;
     }
-    gifs.clear();
+    free(d);
+#endif
 }
 
 JSValue native_gifPlayFrame(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    int gifIndex = 0;
+    uint8_t result = 0;
+#if !defined(LITE_VERSION)
     int x = 0, y = 0, bSync = 1;
     if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &x, argv[0]);
     if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &y, argv[1]);
     if (argc > 2 && JS_IsNumber(ctx, argv[2])) JS_ToInt32(ctx, &bSync, argv[2]);
 
-    // try this object first
-    if (this_val && JS_IsObject(ctx, *this_val)) {
-        JSValue v = JS_GetPropertyStr(ctx, *this_val, "gifPointer");
-        if (!JS_IsUndefined(v)) {
-            int tmp;
-            JS_ToInt32(ctx, &tmp, v);
-            gifIndex = tmp - 1;
-        }
+    if (JS_GetClassID(ctx, *this_val) == JS_CLASS_GIF) {
+        GifData *opaque = (GifData *)JS_GetOpaque(ctx, *this_val);
+        if (!opaque) return NULL;
+        Gif *gif = (Gif *)opaque->gif;
+        if (gif) { result = gif->playFrame(x, y, bSync); }
     }
-
-    uint8_t result = 0;
-    if (gifIndex >= 0 && gifIndex < (int)gifs.size()) {
-        Gif *gif = gifs.at(gifIndex);
-        if (gif != NULL) { result = gif->playFrame(x, y, bSync); }
-    }
+#endif
     return JS_NewInt32(ctx, result);
 }
 
 JSValue native_gifDimensions(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    int gifIndex = -1;
-    if (this_val && JS_IsObject(ctx, *this_val)) {
-        JSValue v = JS_GetPropertyStr(ctx, *this_val, "gifPointer");
-        if (!JS_IsUndefined(v)) {
-            int tmp;
-            JS_ToInt32(ctx, &tmp, v);
-            gifIndex = tmp - 1;
-        }
-    }
-    if (gifIndex < 0 || gifIndex >= (int)gifs.size()) { return JS_NewInt32(ctx, 0); }
-    Gif *gif = gifs.at(gifIndex);
+#if !defined(LITE_VERSION)
+    if (!this_val || !JS_IsObject(ctx, *this_val)) return JS_NewInt32(ctx, 0);
+    GifData *opaque = (GifData *)JS_GetOpaque(ctx, *this_val);
+    if (!opaque) return NULL;
+    Gif *gif = (Gif *)opaque->gif;
     if (!gif) return JS_NewInt32(ctx, 0);
     int canvasWidth = gif->getCanvasWidth();
     int canvasHeight = gif->getCanvasHeight();
@@ -426,96 +407,69 @@ JSValue native_gifDimensions(JSContext *ctx, JSValue *this_val, int argc, JSValu
     JS_SetPropertyStr(ctx, obj, "width", JS_NewInt32(ctx, canvasWidth));
     JS_SetPropertyStr(ctx, obj, "height", JS_NewInt32(ctx, canvasHeight));
     return obj;
+#else
+    return JS_NULL;
+#endif
 }
 
 JSValue native_gifReset(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    int gifIndex = -1;
-    if (this_val && JS_IsObject(ctx, *this_val)) {
-        JSValue v = JS_GetPropertyStr(ctx, *this_val, "gifPointer");
-        if (!JS_IsUndefined(v)) {
-            int tmp;
-            JS_ToInt32(ctx, &tmp, v);
-            gifIndex = tmp - 1;
-        }
-    }
     uint8_t result = 0;
-    if (gifIndex >= 0 && gifIndex < (int)gifs.size()) {
-        Gif *gif = gifs.at(gifIndex);
-        if (gif != NULL) {
-            gifs.at(gifIndex)->reset();
+#if !defined(LITE_VERSION)
+    if (this_val && JS_IsObject(ctx, *this_val)) {
+        GifData *opaque = (GifData *)JS_GetOpaque(ctx, *this_val);
+        if (!opaque) return NULL;
+        Gif *gif = (Gif *)opaque->gif;
+        if (gif) {
+            gif->reset();
             result = 1;
         }
     }
+#endif
     return JS_NewInt32(ctx, result);
 }
 
 JSValue native_gifClose(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    int gifIndex = -1;
-    if (argc > 0 && JS_IsObject(ctx, argv[0])) {
-        JSValue v = JS_GetPropertyStr(ctx, argv[0], "gifPointer");
-        if (!JS_IsUndefined(v)) {
-            int tmp;
-            JS_ToInt32(ctx, &tmp, v);
-            gifIndex = tmp - 1;
-        }
-    } else if (this_val && JS_IsObject(ctx, *this_val)) {
-        JSValue v = JS_GetPropertyStr(ctx, *this_val, "gifPointer");
-        if (!JS_IsUndefined(v)) {
-            int tmp;
-            JS_ToInt32(ctx, &tmp, v);
-            gifIndex = tmp - 1;
-        }
+#if !defined(LITE_VERSION)
+    JSValue obj = JS_UNDEFINED;
+    if (argc > 0 && JS_IsObject(ctx, argv[0])) obj = argv[0];
+    else if (this_val && JS_IsObject(ctx, *this_val)) obj = *this_val;
+    if (JS_IsUndefined(obj)) return JS_NewInt32(ctx, 0);
+
+    int cid = JS_GetClassID(ctx, obj);
+    if (cid == JS_CLASS_GIF) {
+        void *opaque = JS_GetOpaque(ctx, obj);
+        if (!opaque) return JS_NewInt32(ctx, 0);
+        native_gif_finalizer(ctx, opaque);
+        JS_SetOpaque(ctx, obj, NULL);
+        return JS_NewInt32(ctx, 1);
     }
-    uint8_t result = 0;
-    if (gifIndex >= 0 && gifIndex < (int)gifs.size()) {
-        Gif *gif = gifs.at(gifIndex);
-        if (gif != NULL) {
-            delete gif;
-            gifs.at(gifIndex) = NULL;
-            result = 1;
-            if (this_val && JS_IsObject(ctx, *this_val))
-                JS_SetPropertyStr(ctx, *this_val, "gifPointer", JS_NewInt32(ctx, 0));
-        }
-    }
-    return JS_NewInt32(ctx, result);
+#endif
+    return JS_NewInt32(ctx, 0);
 }
 
 JSValue native_gifOpen(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+#if !defined(LITE_VERSION)
     FileParamsJS file = js_get_path_from_params(ctx, argv, true, true);
     Gif *gif = new Gif();
     bool success = gif->openGIF(file.fs, file.path.c_str());
-    if (!success) {
-        return JS_NULL;
-    } else {
-        gifs.push_back(gif);
-        JSValue obj = JS_NewObject(ctx);
-        JS_SetPropertyStr(ctx, obj, "gifPointer", JS_NewInt32(ctx, gifs.size()));
-
-        JSValue global = JS_GetGlobalObject(ctx);
-        JSValue internalFunctions = JS_GetPropertyStr(ctx, global, "internal_functions");
-        if (!JS_IsUndefined(internalFunctions)) {
-            JSValue f;
-            f = JS_GetPropertyStr(ctx, internalFunctions, "gifPlayFrame");
-            if (!JS_IsUndefined(f)) JS_SetPropertyStr(ctx, obj, "playFrame", f);
-
-            f = JS_GetPropertyStr(ctx, internalFunctions, "gifDimensions");
-            if (!JS_IsUndefined(f)) JS_SetPropertyStr(ctx, obj, "dimensions", f);
-
-            f = JS_GetPropertyStr(ctx, internalFunctions, "gifReset");
-            if (!JS_IsUndefined(f)) JS_SetPropertyStr(ctx, obj, "reset", f);
-
-            f = JS_GetPropertyStr(ctx, internalFunctions, "gifClose");
-            if (!JS_IsUndefined(f)) JS_SetPropertyStr(ctx, obj, "close", f);
+    if (success) {
+        JSValue obj = JS_NewObjectClassUser(ctx, JS_CLASS_GIF);
+        if (JS_IsException(obj)) {
+            delete gif;
+            return obj;
         }
+        GifData *d = (GifData *)malloc(sizeof(GifData));
+        if (!d) {
+            delete gif;
+            return JS_ThrowOutOfMemory(ctx);
+        }
+        d->gif = gif;
+        JS_SetOpaque(ctx, obj, d);
 
         return obj;
     }
-}
 #endif
-
-void clearDisplayModuleData() {
-    clearGifsVector();
-    clearSpritesVector();
+    return JS_ThrowTypeError(ctx, "Failed to open GIF file");
 }
 
 JSValue native_deleteSprite(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
@@ -524,44 +478,21 @@ JSValue native_deleteSprite(JSContext *ctx, JSValue *this_val, int argc, JSValue
     else if (this_val && JS_IsObject(ctx, *this_val)) obj = *this_val;
     if (JS_IsUndefined(obj)) return JS_NewInt32(ctx, 0);
 
-    /* Try numeric spritePointer first (plain objects created by native_createSprite)
-       which store a 1-based index. If found, delete the underlying C sprite
-       and clear the property. Otherwise fall back to class/opaque-based deletion. */
-    JSValue v = JS_GetPropertyStr(ctx, obj, "spritePointer");
-    if (!JS_IsUndefined(v)) {
-        int tmp;
-        JS_ToInt32(ctx, &tmp, v);
-        int idx = tmp - 1;
-        if (idx >= 0 && idx < (int)sprites.size() && sprites[idx]) {
-            delete sprites[idx];
-            sprites[idx] = NULL;
-            JS_SetPropertyStr(ctx, obj, "spritePointer", JS_NewInt32(ctx, 0));
-            return JS_NewInt32(ctx, 1);
-        }
-        return JS_NewInt32(ctx, 0);
+    int cid = JS_GetClassID(ctx, obj);
+    if (cid == JS_CLASS_SPRITE) {
+        void *opaque = JS_GetOpaque(ctx, obj);
+        if (!opaque) return JS_NewInt32(ctx, 0);
+        native_sprite_finalizer(ctx, opaque);
+        JS_SetOpaque(ctx, obj, NULL);
+        return JS_NewInt32(ctx, 1);
     }
 
-    int cid = JS_GetClassID(ctx, obj);
-    if (cid != JS_CLASS_SPRITE) return JS_NewInt32(ctx, 0);
-    void *opaque = JS_GetOpaque(ctx, obj);
-    if (!opaque) return JS_NewInt32(ctx, 0);
-    // Call finalizer to free underlying C resources, then clear opaque
-    native_sprite_finalizer(ctx, opaque);
-    JS_SetOpaque(ctx, obj, NULL);
-    return JS_NewInt32(ctx, 1);
+    return JS_NewInt32(ctx, 0);
 }
 
 JSValue native_pushSprite(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-#if defined(HAS_SCREEN)
-#ifndef BOARD_HAS_PSRAM
-    return JS_NewInt32(ctx, 1);
-#else
-    JSValue v = JS_GetPropertyStr(ctx, *this_val, "spritePointer");
-    if (!JS_IsUndefined(v)) {
-        reinterpret_cast<TFT_eSprite *>(get_display(ctx, this_val))->pushSprite(0, 0);
-        return JS_UNDEFINED;
-    }
-#endif
+#if defined(HAS_SCREEN) && defined(BOARD_HAS_PSRAM)
+    reinterpret_cast<TFT_eSprite *>(get_display(ctx, this_val))->pushSprite(0, 0);
 #endif
     return JS_UNDEFINED;
 }
@@ -591,10 +522,6 @@ JSValue native_createSprite(JSContext *ctx, JSValue *this_val, int argc, JSValue
 
     // set opaque pointer so finalizer can free C resources
     JS_SetOpaque(ctx, obj, d);
-
-    // register numeric sprite id (1-based) for legacy APIs and compatibility
-    sprites.push_back(d->sprite);
-    JS_SetPropertyStr(ctx, obj, "spritePointer", JS_NewInt32(ctx, sprites.size()));
 
     return obj;
 #else

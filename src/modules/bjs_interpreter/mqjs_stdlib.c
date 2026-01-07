@@ -609,14 +609,22 @@ static const JSPropDef js_sprite[] = {
 static const JSClassDef js_sprite_class =
     JS_CLASS_DEF("Sprite", 0, native_createSprite, JS_CLASS_SPRITE, js_sprite, js_sprite_proto, NULL, native_sprite_finalizer);
 
-static const JSPropDef js_internal_functions[] = {
-    JS_PROP_CLASS_DEF("dialog", &js_dialog_obj),
-#if !defined(LITE_VERSION)
+static const JSPropDef js_gif_proto[] = {
     JS_CFUNC_DEF("gifPlayFrame", 3, native_gifPlayFrame),
     JS_CFUNC_DEF("gifDimensions", 0, native_gifDimensions),
     JS_CFUNC_DEF("gifReset", 0, native_gifReset),
     JS_CFUNC_DEF("gifClose", 1, native_gifClose),
-#endif
+    JS_PROP_END,
+};
+
+static const JSPropDef js_gif[] = {
+    JS_PROP_END,
+};
+
+static const JSClassDef js_gif_class =
+    JS_CLASS_DEF("Gif", 0, NULL, JS_CLASS_GIF, js_gif, js_gif_proto, NULL, native_gif_finalizer);
+
+static const JSPropDef js_internal_functions[] = {
     JS_PROP_END,
 };
 
@@ -688,6 +696,7 @@ static const JSPropDef js_global_object[] = {
     JS_CFUNC_DEF("to_hex_string", 1, native_to_hex_string ),
     JS_CFUNC_DEF("to_lower_case", 1, native_to_lower_case ),
     JS_CFUNC_DEF("to_upper_case", 1, native_to_upper_case ),
+    JS_CFUNC_DEF("exit", 0, native_exit ),
 
     /* Modules */
     JS_PROP_CLASS_DEF("audio", &js_audio_obj),
@@ -705,11 +714,12 @@ static const JSPropDef js_global_object[] = {
     JS_PROP_CLASS_DEF("subghz", &js_subghz_obj),
     JS_PROP_CLASS_DEF("wifi", &js_wifi_obj),
 
-    // MUST BE IN THE SAME ORDER AS IN THE user_classes_js FILE
+    // MUST BE IN THE SAME ORDER AS IN THE user_classes_js FILE they cannot be guarded by #ifdef LITE_VERSION
     JS_PROP_CLASS_DEF("Sprite", &js_sprite_class),
     JS_PROP_CLASS_DEF("TextViewer", &js_textviewer_class),
+    JS_PROP_CLASS_DEF("Gif", &js_gif_class),
 
-    JS_PROP_CLASS_DEF("internal_functions", &js_internal_functions_obj),
+    JS_PROP_CLASS_DEF("__internal_functions", &js_internal_functions_obj),
 
     JS_PROP_END,
 };

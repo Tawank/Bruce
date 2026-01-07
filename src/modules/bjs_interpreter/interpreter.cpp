@@ -49,9 +49,6 @@ void interpreterHandler(void *pvParameters) {
     JS_SetPropertyStr(ctx, global, "PULLDOWN", JS_NewInt32(ctx, PULLDOWN));
     JS_SetPropertyStr(ctx, global, "INPUT_PULLDOWN", JS_NewInt32(ctx, INPUT_PULLDOWN));
 
-    // Init containers
-    clearDisplayModuleData();
-
     printMemoryUsage("context created");
 
     size_t scriptSize = strlen(script);
@@ -74,7 +71,6 @@ void interpreterHandler(void *pvParameters) {
     free(mem_buf);
 
     // Clean up.
-    clearDisplayModuleData();
     // TODO: if backgroud app implemented, store in ctx and set if on foreground/background
     LongPress = false;
 
@@ -83,7 +79,7 @@ void interpreterHandler(void *pvParameters) {
     return;
 }
 
-// function to start the JS Interpreterm choosinng the file, processing and
+// function to start the JS Interpreterm choosing the file, processing and
 // start
 void run_bjs_script() {
     String filename;
@@ -128,26 +124,5 @@ bool run_bjs_script_headless(FS fs, String filename) {
     interpreter_start = true;
     return true;
 }
-
-const char *nth_strchr(const char *s, char c, int8_t n) {
-    const char *nth = s;
-    if (c == '\0' || n < 1) return NULL;
-
-    for (int i = 0; i < n; i++) {
-        if ((nth = strchr(nth, c)) == 0) break;
-        nth++;
-    }
-
-    return nth;
-}
-
-/* 2FIX: not working
-// terminate the script
-duk_ret_t native_exit(duk_context *ctx) {
-  duk_error(ctx, DUK_ERR_ERROR, "Script exited");
-  interpreter_start=false;
-  return 0;
-}
-*/
 
 #endif
