@@ -61,10 +61,10 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Install build deps (multilib)
+      - name: Install build deps
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends gcc-multilib libc6-dev-i386
+          sudo apt-get install -y --no-install-recommends build-essential
 
       # - name: Cache pip
       #   uses: actions/cache@v4

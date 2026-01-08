@@ -6,11 +6,12 @@ import hashlib
 PIOENV = env.subst("$PIOENV")
 MQJS_PATH = os.path.join(".pio/libdeps", PIOENV, "mquickjs")
 
-BUILD_DIR = "mqjs_build"
-GEN = os.path.join(BUILD_DIR, "mqjs_stdlib")
+BUILD_DIR = "lib/mquickjs_headers"
+GEN = os.path.join(BUILD_DIR, "mqjs_stdlib_generator")
 BUILD_SHA256 = os.path.join(BUILD_DIR, "mqjs_stdlib.build.sha256")
 
-WATCH_FILE = "src/modules/bjs_interpreter/mqjs_stdlib.c"
+BJS_INTERPRETER_PATH = "src/modules/bjs_interpreter/"
+WATCH_FILE = os.path.join(BJS_INTERPRETER_PATH, "mqjs_stdlib.c")
 
 SRC = [
     WATCH_FILE,
@@ -87,9 +88,7 @@ def compute_signature():
     return h.hexdigest()
 
 def needs_rebuild():
-    if not os.path.exists(GEN):
-        return True
-    if not os.path.exists("src/modules/bjs_interpreter/mqjs_stdlib.h"):
+    if not os.path.exists(os.path.join(BJS_INTERPRETER_PATH, "mqjs_stdlib.h")):
         return True
     if not os.path.exists(BUILD_SHA256):
         return True
@@ -104,8 +103,17 @@ def write_build_stamp():
     with open(BUILD_SHA256, "w") as f:
         f.write(compute_signature())
 
+def get_build_flag_value(flag_name):
+    build_flags = env.ParseFlags(env['BUILD_FLAGS'])
+    flags_with_value_list = [build_flag for build_flag in build_flags.get('CPPDEFINES') if type(build_flag) == list]
+    defines = {k: v for (k, v) in flags_with_value_list}
+    return defines.get(flag_name)
+
 def generate_headers():
     if not os.path.exists(MQJS_PATH):
+        return
+
+    if get_build_flag_value("LITE_VERSION") is not None or get_build_flag_value("DISABLE_INTERPRETER") is not None:
         return
 
     os.makedirs(BUILD_DIR, exist_ok=True)
@@ -119,14 +127,14 @@ def generate_headers():
 
     print("gen_mqjs_headers.py Generating QuickJS headers for 32-bit targets")
 
-    with open("src/modules/bjs_interpreter/mqjs_stdlib.h", "w") as f:
+    with open(os.path.join(BJS_INTERPRETER_PATH, "mqjs_stdlib.h"), "w") as f:
         result = subprocess.run([GEN, "-m32"], capture_output=True, text=True, check=True)
         for line in INCLUDES:
             f.write(f'#include "{line}.h"\n')
         f.write("\n")
         f.write(result.stdout)
 
-    with open(os.path.join(MQJS_PATH, "mquickjs_atom.h"), "w") as f:
+    with open(os.path.join(BUILD_DIR, "mquickjs_atom.h"), "w") as f:
         subprocess.check_call([GEN, "-a", "-m32"], stdout=f)
 
     write_build_stamp()
