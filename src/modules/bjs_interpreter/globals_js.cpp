@@ -27,7 +27,9 @@ JSValue js_load(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
 typedef struct {
     bool allocated;
     JSGCRef func;
-    int64_t timeout; /* in ms */
+    int64_t timeout;     /* next due time in ms */
+    int32_t interval_ms; /* period for intervals */
+    bool repeat;
 } JSTimer;
 
 #define MAX_TIMERS 16
@@ -110,6 +112,34 @@ JSValue js_setTimeout(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv
             pfunc = JS_AddGCRef(ctx, &th->func);
             *pfunc = argv[0];
             th->timeout = millis() + delay;
+            th->interval_ms = 0;
+            th->repeat = false;
+            th->allocated = true;
+            return JS_NewInt32(ctx, i);
+        }
+    }
+    return JS_ThrowInternalError(ctx, "too many timers");
+}
+
+JSValue js_setInterval(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+    JSTimer *th;
+    int delay, i;
+    JSValue *pfunc;
+
+    if (!JS_IsFunction(ctx, argv[0])) return JS_ThrowTypeError(ctx, "not a function");
+    if (JS_ToInt32(ctx, &delay, argv[1])) return JS_EXCEPTION;
+
+    JSTimerContextState *state = get_timer_state(ctx, true);
+    if (!state) return JS_ThrowInternalError(ctx, "out of memory");
+
+    for (i = 0; i < MAX_TIMERS; i++) {
+        th = &state->timers[i];
+        if (!th->allocated) {
+            pfunc = JS_AddGCRef(ctx, &th->func);
+            *pfunc = argv[0];
+            th->timeout = millis() + delay;
+            th->interval_ms = delay;
+            th->repeat = true;
             th->allocated = true;
             return JS_NewInt32(ctx, i);
         }
@@ -135,8 +165,14 @@ JSValue js_clearTimeout(JSContext *ctx, JSValue *this_val, int argc, JSValue *ar
     return JS_UNDEFINED;
 }
 
+JSValue js_clearInterval(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
+    return js_clearTimeout(ctx, this_val, argc, argv);
+}
+
 void run_timers(JSContext *ctx) {
-    int64_t min_delay, delayMs, cur_time;
+    int64_t min_delay;
+    int64_t delayMs;
+    int64_t cur_time;
     bool has_timer;
     int i;
     JSTimer *th;
@@ -161,8 +197,14 @@ void run_timers(JSContext *ctx) {
                     JS_PushArg(ctx, th->func.val); /* func name */
                     JS_PushArg(ctx, JS_NULL);      /* this */
 
-                    JS_DeleteGCRef(ctx, &th->func);
-                    th->allocated = false;
+                    if (!th->repeat) {
+                        JS_DeleteGCRef(ctx, &th->func);
+                        th->allocated = false;
+                    } else {
+                        // Reschedule before calling so callbacks can clearInterval safely.
+                        // Keep cadence by advancing from the previous due time.
+                        th->timeout = th->timeout + (int64_t)th->interval_ms;
+                    }
 
                     ret = JS_Call(ctx, 0);
                     if (JS_IsException(ret)) {
@@ -170,6 +212,8 @@ void run_timers(JSContext *ctx) {
                         log_e("Error in run_timers");
                         js_fatal_error_handler(ctx);
                     }
+
+                    // If interval callback threw, state may still be allocated; keep going.
                     min_delay = 0;
                     break;
                 } else if (delayMs < min_delay) {

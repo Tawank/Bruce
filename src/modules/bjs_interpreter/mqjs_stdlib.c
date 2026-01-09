@@ -685,6 +685,8 @@ static const JSPropDef js_global_object[] = {
     JS_CFUNC_DEF("load", 1, js_load),
     JS_CFUNC_DEF("setTimeout", 2, js_setTimeout),
     JS_CFUNC_DEF("clearTimeout", 1, js_clearTimeout),
+    JS_CFUNC_DEF("setInterval", 2, js_setInterval),
+    JS_CFUNC_DEF("clearInterval", 1, js_clearInterval),
 
     /* Bruce functions */
     /* Global functions */
