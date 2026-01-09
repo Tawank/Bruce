@@ -624,7 +624,11 @@ static const JSPropDef js_gif[] = {
 static const JSClassDef js_gif_class =
     JS_CLASS_DEF("Gif", 0, NULL, JS_CLASS_GIF, js_gif, js_gif_proto, NULL, native_gif_finalizer);
 
+static const JSClassDef js_timers_state_class =
+    JS_CLASS_DEF("TimersState", 0, NULL, JS_CLASS_TIMERS_STATE, NULL, NULL, NULL, native_timers_state_finalizer);
+
 static const JSPropDef js_internal_functions[] = {
+    JS_PROP_CLASS_DEF("TimersState", &js_timers_state_class),
     JS_PROP_END,
 };
 
@@ -715,6 +719,7 @@ static const JSPropDef js_global_object[] = {
     JS_PROP_CLASS_DEF("wifi", &js_wifi_obj),
 
     // MUST BE IN THE SAME ORDER AS IN THE user_classes_js FILE they cannot be guarded by #ifdef LITE_VERSION
+    JS_PROP_CLASS_DEF("TimersState", &js_timers_state_class),
     JS_PROP_CLASS_DEF("Sprite", &js_sprite_class),
     JS_PROP_CLASS_DEF("TextViewer", &js_textviewer_class),
     JS_PROP_CLASS_DEF("Gif", &js_gif_class),

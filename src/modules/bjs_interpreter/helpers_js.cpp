@@ -4,6 +4,13 @@
 #include <globals.h>
 
 void js_fatal_error_handler(JSContext *ctx) {
+    JSValue obj;
+    JSCStringBuf sb;
+    obj = JS_GetException(ctx);
+
+    JSValue jsvMessage = JS_GetPropertyStr(ctx, obj, "message");
+    if (strcmp(JS_ToCString(ctx, jsvMessage, &sb), "Script exited") == 0) { return; }
+
     tft.fillScreen(bruceConfig.bgColor);
     tft.setTextSize(FM);
     tft.setTextColor(TFT_RED, bruceConfig.bgColor);
@@ -11,13 +18,6 @@ void js_fatal_error_handler(JSContext *ctx) {
     tft.setTextColor(TFT_WHITE, bruceConfig.bgColor);
     tft.setTextSize(FP);
     tft.setCursor(0, 33);
-
-    JSValue obj;
-    JSCStringBuf sb;
-    obj = JS_GetException(ctx);
-
-    JSValue jsvMessage = JS_GetPropertyStr(ctx, obj, "message");
-    if (strcmp(JS_ToCString(ctx, jsvMessage, &sb), "Script exited")) { return; }
 
     JSValue jsvStack = JS_GetPropertyStr(ctx, obj, "stack");
     const char *stackTrace = NULL;

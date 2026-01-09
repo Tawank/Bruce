@@ -9,10 +9,13 @@ extern "C" {
 }
 
 #include "display_js.h"
+#include "globals_js.h"
 
 char *script = NULL;
 char *scriptDirpath = NULL;
 char *scriptName = NULL;
+
+TaskHandle_t interpreterTaskHandler = NULL;
 
 void interpreterHandler(void *pvParameters) {
     printMemoryUsage("init interpreter");
@@ -28,6 +31,8 @@ void interpreterHandler(void *pvParameters) {
     uint8_t *mem_buf = psramAvailable ? (uint8_t *)ps_malloc(mem_size) : (uint8_t *)malloc(mem_size);
     JSContext *ctx = JS_NewContext(mem_buf, mem_size, &js_stdlib);
     JS_SetLogFunc(ctx, js_log_func);
+
+    js_timers_init(ctx);
 
     // Set global variables
     JSValue global = JS_GetGlobalObject(ctx);
@@ -58,6 +63,10 @@ void interpreterHandler(void *pvParameters) {
 
     run_timers(ctx);
 
+    LongPress = false;
+    if (JS_IsException(val)) { js_fatal_error_handler(ctx); }
+
+    // Clean up.
     free((char *)script);
     script = NULL;
     free((char *)scriptDirpath);
@@ -65,22 +74,37 @@ void interpreterHandler(void *pvParameters) {
     free((char *)scriptName);
     scriptName = NULL;
 
-    if (JS_IsException(val)) { js_fatal_error_handler(ctx); }
-
+    js_timers_deinit(ctx);
     JS_FreeContext(ctx);
     free(mem_buf);
 
-    // Clean up.
-    // TODO: if backgroud app implemented, store in ctx and set if on foreground/background
-    LongPress = false;
+    printMemoryUsage("deinit interpreter");
 
-    interpreter_start = false;
+    // TODO: if backgroud app implemented, store in ctx and set if on foreground/background
+
+    interpreter_foreground = false;
+    interpreterTaskHandler = NULL;
     vTaskDelete(NULL);
     return;
 }
 
-// function to start the JS Interpreterm choosing the file, processing and
-// start
+void startInterpreterTask() {
+    if (interpreterTaskHandler != NULL) {
+        log_w("Interpreter task already running");
+        interpreter_foreground = true;
+        return;
+    }
+
+    xTaskCreate(
+        interpreterHandler,          // Task function
+        "interpreterHandler",        // Task Name
+        INTERPRETER_TASK_STACK_SIZE, // Stack size
+        NULL,                        // Task parameters
+        2,                           // Task priority (0 to 3), loopTask has priority 2.
+        &interpreterTaskHandler      // Task handle
+    );
+}
+
 void run_bjs_script() {
     String filename;
     FS *fs = &LittleFS;
@@ -97,9 +121,8 @@ void run_bjs_script() {
     if (script == NULL) { return; }
 
     returnToMenu = true;
-    interpreter_start = true;
-
-    // To stop the script, press Prev and Next together for a few seconds
+    interpreter_foreground = true;
+    startInterpreterTask();
 }
 
 bool run_bjs_script_headless(char *code) {
@@ -107,8 +130,10 @@ bool run_bjs_script_headless(char *code) {
     if (script == NULL) { return false; }
     scriptDirpath = strdup("/scripts");
     scriptName = strdup("index.js");
+
     returnToMenu = true;
-    interpreter_start = true;
+    interpreter_foreground = true;
+    startInterpreterTask();
     return true;
 }
 
@@ -121,7 +146,8 @@ bool run_bjs_script_headless(FS fs, String filename) {
     scriptDirpath = strndup(filename.c_str(), slash);
 
     returnToMenu = true;
-    interpreter_start = true;
+    interpreter_foreground = true;
+    startInterpreterTask();
     return true;
 }
 

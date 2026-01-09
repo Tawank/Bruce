@@ -84,7 +84,7 @@ void __attribute__((weak)) taskInputHandler(void *parameter) {
 unsigned long previousMillis = millis();
 int prog_handler; // 0 - Flash, 1 - LittleFS, 3 - Download
 String cachedPassword = "";
-bool interpreter_start = false;
+bool interpreter_foreground = false;
 bool sdcardMounted = false;
 bool gpsConnected = false;
 
@@ -474,25 +474,12 @@ void setup() {
  **********************************************************************/
 #if defined(HAS_SCREEN)
 void loop() {
-    // Interpreter must be ran in the loop() function, otherwise it breaks
-    // called by 'stack canary watchpoint triggered (loopTask)'
 #if !defined(LITE_VERSION) && !defined(DISABLE_INTERPRETER)
-    if (interpreter_start) {
-        TaskHandle_t interpreterTaskHandler = NULL;
+    if (interpreter_foreground) {
         vTaskDelete(serialcmdsTaskHandle); // stop serial commands while in interpreter
         vTaskDelay(pdMS_TO_TICKS(10));
-        xTaskCreate(
-            interpreterHandler,          // Task function
-            "interpreterHandler",        // Task Name
-            INTERPRETER_TASK_STACK_SIZE, // Stack size
-            NULL,                        // Task parameters
-            2,                           // Task priority (0 to 3), loopTask has priority 2.
-            &interpreterTaskHandler      // Task handle
-        );
-
-        while (interpreter_start == true) { vTaskDelay(pdMS_TO_TICKS(500)); }
+        while (interpreter_foreground) { vTaskDelay(pdMS_TO_TICKS(500)); }
         startSerialCommandsHandlerTask();
-        interpreter_start = false;
         previousMillis = millis(); // ensure that will not dim screen when get back to menu
     }
 #endif

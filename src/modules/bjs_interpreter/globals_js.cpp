@@ -1,5 +1,6 @@
 #if !defined(LITE_VERSION) && !defined(DISABLE_INTERPRETER)
 #include "globals_js.h"
+#include "user_classes_js.h"
 #include <chrono>
 
 JSValue js_gc(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
@@ -31,7 +32,66 @@ typedef struct {
 
 #define MAX_TIMERS 16
 
-static JSTimer js_timer_list[MAX_TIMERS];
+typedef struct {
+    JSTimer timers[MAX_TIMERS];
+} JSTimerContextState;
+
+static const char *kTimersStateProp = "__bruce_timers_state";
+
+static JSTimerContextState *get_timer_state(JSContext *ctx, bool create) {
+    JSValue global = JS_GetGlobalObject(ctx);
+    JSValue holder = JS_GetPropertyStr(ctx, global, kTimersStateProp);
+
+    if (JS_IsObject(ctx, holder)) {
+        void *opaque = JS_GetOpaque(ctx, holder);
+        if (opaque) return (JSTimerContextState *)opaque;
+    }
+
+    if (!create) return NULL;
+
+    JSTimerContextState *state = (JSTimerContextState *)calloc(1, sizeof(JSTimerContextState));
+    if (!state) return NULL;
+
+    if (!JS_IsObject(ctx, holder)) { holder = JS_NewObjectClassUser(ctx, JS_CLASS_TIMERS_STATE); }
+    JS_SetOpaque(ctx, holder, state);
+    JS_SetPropertyStr(ctx, global, kTimersStateProp, holder);
+    return state;
+}
+
+void native_timers_state_finalizer(JSContext *ctx, void *opaque) {
+    JSTimerContextState *state = (JSTimerContextState *)opaque;
+    if (!state) return;
+    for (int i = 0; i < MAX_TIMERS; i++) {
+        if (state->timers[i].allocated) {
+            JS_DeleteGCRef(ctx, &state->timers[i].func);
+            state->timers[i].allocated = false;
+        }
+    }
+    free(state);
+}
+
+void js_timers_init(JSContext *ctx) { (void)get_timer_state(ctx, true); }
+
+void js_timers_deinit(JSContext *ctx) {
+    JSValue global = JS_GetGlobalObject(ctx);
+    JSValue holder = JS_GetPropertyStr(ctx, global, kTimersStateProp);
+    if (!JS_IsObject(ctx, holder)) return;
+
+    JSTimerContextState *state = (JSTimerContextState *)JS_GetOpaque(ctx, holder);
+    if (!state) return;
+
+    for (int i = 0; i < MAX_TIMERS; i++) {
+        if (state->timers[i].allocated) {
+            JS_DeleteGCRef(ctx, &state->timers[i].func);
+            state->timers[i].allocated = false;
+        }
+    }
+
+    JS_SetOpaque(ctx, holder, NULL);
+    free(state);
+
+    JS_SetPropertyStr(ctx, global, kTimersStateProp, JS_UNDEFINED);
+}
 
 JSValue js_setTimeout(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
     JSTimer *th;
@@ -40,8 +100,12 @@ JSValue js_setTimeout(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv
 
     if (!JS_IsFunction(ctx, argv[0])) return JS_ThrowTypeError(ctx, "not a function");
     if (JS_ToInt32(ctx, &delay, argv[1])) return JS_EXCEPTION;
+
+    JSTimerContextState *state = get_timer_state(ctx, true);
+    if (!state) return JS_ThrowInternalError(ctx, "out of memory");
+
     for (i = 0; i < MAX_TIMERS; i++) {
-        th = &js_timer_list[i];
+        th = &state->timers[i];
         if (!th->allocated) {
             pfunc = JS_AddGCRef(ctx, &th->func);
             *pfunc = argv[0];
@@ -59,7 +123,10 @@ JSValue js_clearTimeout(JSContext *ctx, JSValue *this_val, int argc, JSValue *ar
 
     if (JS_ToInt32(ctx, &timer_id, argv[0])) return JS_EXCEPTION;
     if (timer_id >= 0 && timer_id < MAX_TIMERS) {
-        th = &js_timer_list[timer_id];
+        JSTimerContextState *state = get_timer_state(ctx, false);
+        if (!state) return JS_UNDEFINED;
+
+        th = &state->timers[timer_id];
         if (th->allocated) {
             JS_DeleteGCRef(ctx, &th->func);
             th->allocated = false;
@@ -75,12 +142,15 @@ void run_timers(JSContext *ctx) {
     JSTimer *th;
     struct timespec ts;
 
+    JSTimerContextState *state = get_timer_state(ctx, false);
+    if (!state) return;
+
     for (;;) {
         min_delay = 1000;
         cur_time = millis();
         has_timer = false;
         for (i = 0; i < MAX_TIMERS; i++) {
-            th = &js_timer_list[i];
+            th = &state->timers[i];
             if (th->allocated) {
                 has_timer = true;
                 delayMs = th->timeout - cur_time;

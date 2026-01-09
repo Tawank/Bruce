@@ -13,6 +13,11 @@ JSValue js_setTimeout(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv
 JSValue js_clearTimeout(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
 void run_timers(JSContext *ctx);
 
+void native_timers_state_finalizer(JSContext *ctx, void *opaque);
+
+void js_timers_init(JSContext *ctx);
+void js_timers_deinit(JSContext *ctx);
+
 JSValue js_print(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
 JSValue js_date_now(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
 JSValue js_performance_now(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);

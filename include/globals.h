@@ -61,7 +61,7 @@ extern XPowersPPM PPM;
 extern XPowersPPM PPM;
 #endif
 
-extern bool interpreter_start;
+extern bool interpreter_foreground;
 
 extern BruceConfig bruceConfig;
 extern BruceConfigPins bruceConfigPins;
