@@ -84,7 +84,7 @@ void __attribute__((weak)) taskInputHandler(void *parameter) {
 unsigned long previousMillis = millis();
 int prog_handler; // 0 - Flash, 1 - LittleFS, 3 - Download
 String cachedPassword = "";
-bool interpreter_foreground = false;
+uint8_t interpreter_state = 0;
 bool sdcardMounted = false;
 bool gpsConnected = false;
 
@@ -475,10 +475,12 @@ void setup() {
 #if defined(HAS_SCREEN)
 void loop() {
 #if !defined(LITE_VERSION) && !defined(DISABLE_INTERPRETER)
-    if (interpreter_foreground) {
+    if (interpreter_state != 0) {
         vTaskDelete(serialcmdsTaskHandle); // stop serial commands while in interpreter
         vTaskDelay(pdMS_TO_TICKS(10));
-        while (interpreter_foreground) { vTaskDelay(pdMS_TO_TICKS(500)); }
+        interpreter_state = 2;
+        while (interpreter_state) { vTaskDelay(pdMS_TO_TICKS(500)); }
+        interpreterTaskHandler = NULL;
         startSerialCommandsHandlerTask();
         previousMillis = millis(); // ensure that will not dim screen when get back to menu
     }

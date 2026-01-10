@@ -20,6 +20,9 @@ TaskHandle_t interpreterTaskHandler = NULL;
 void interpreterHandler(void *pvParameters) {
     printMemoryUsage("init interpreter");
     if (script == NULL) { return; }
+
+    while (interpreter_state != 2) { vTaskDelay(pdMS_TO_TICKS(500)); }
+
     tft.fillScreen(TFT_BLACK);
     tft.setRotation(bruceConfigPins.rotation);
     tft.setTextSize(FM);
@@ -82,8 +85,7 @@ void interpreterHandler(void *pvParameters) {
 
     // TODO: if backgroud app implemented, store in ctx and set if on foreground/background
 
-    interpreter_foreground = false;
-    interpreterTaskHandler = NULL;
+    interpreter_state = 0;
     vTaskDelete(NULL);
     return;
 }
@@ -91,7 +93,7 @@ void interpreterHandler(void *pvParameters) {
 void startInterpreterTask() {
     if (interpreterTaskHandler != NULL) {
         log_w("Interpreter task already running");
-        interpreter_foreground = true;
+        interpreter_state = 1;
         return;
     }
 
@@ -121,7 +123,7 @@ void run_bjs_script() {
     if (script == NULL) { return; }
 
     returnToMenu = true;
-    interpreter_foreground = true;
+    interpreter_state = 1;
     startInterpreterTask();
 }
 
@@ -132,7 +134,7 @@ bool run_bjs_script_headless(char *code) {
     scriptName = strdup("index.js");
 
     returnToMenu = true;
-    interpreter_foreground = true;
+    interpreter_state = 1;
     startInterpreterTask();
     return true;
 }
@@ -146,7 +148,7 @@ bool run_bjs_script_headless(FS fs, String filename) {
     scriptDirpath = strndup(filename.c_str(), slash);
 
     returnToMenu = true;
-    interpreter_foreground = true;
+    interpreter_state = 1;
     startInterpreterTask();
     return true;
 }

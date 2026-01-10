@@ -6,9 +6,7 @@
 
 #include <string.h>
 
-extern char *script;
-extern char *scriptDirpath;
-extern char *scriptName;
+extern TaskHandle_t interpreterTaskHandler;
 
 // Credits to https://github.com/justinknight93/Doolittle
 // This functionality is dedicated to @justinknight93 for providing such a nice example! Consider yourself a
