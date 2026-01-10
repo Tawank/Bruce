@@ -85,7 +85,7 @@ void interpreterHandler(void *pvParameters) {
 
     // TODO: if backgroud app implemented, store in ctx and set if on foreground/background
 
-    interpreter_state = 0;
+    interpreter_state = -1;
     vTaskDelete(NULL);
     return;
 }
@@ -97,13 +97,14 @@ void startInterpreterTask() {
         return;
     }
 
-    xTaskCreate(
+    xTaskCreateUniversal(
         interpreterHandler,          // Task function
         "interpreterHandler",        // Task Name
         INTERPRETER_TASK_STACK_SIZE, // Stack size
         NULL,                        // Task parameters
         2,                           // Task priority (0 to 3), loopTask has priority 2.
-        &interpreterTaskHandler      // Task handle
+        &interpreterTaskHandler,     // Task handle
+        ARDUINO_RUNNING_CORE         // run on core the same core as loop task
     );
 }
 

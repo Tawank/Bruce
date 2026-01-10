@@ -62,8 +62,14 @@ static SerialDisplayClass *get_display(JSContext *ctx, JSValue *this_val) {
 
 JSValue native_setTextColor(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
     int c = 0;
+    int bg = -1;
     if (argc > 0 && JS_IsNumber(ctx, argv[0])) JS_ToInt32(ctx, &c, argv[0]);
-    get_display(ctx, this_val)->setTextColor(c);
+    if (argc > 1 && JS_IsNumber(ctx, argv[1])) JS_ToInt32(ctx, &bg, argv[1]);
+    if (bg >= 0) {
+        get_display(ctx, this_val)->setTextColor(c, bg);
+    } else {
+        get_display(ctx, this_val)->setTextColor(c);
+    }
     return JS_UNDEFINED;
 }
 

@@ -15,6 +15,8 @@ JSValue js_setInterval(JSContext *ctx, JSValue *this_val, int argc, JSValue *arg
 JSValue js_clearInterval(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv);
 void run_timers(JSContext *ctx);
 
+int js_add_main_timer(JSContext *ctx, JSValue func);
+
 void native_timers_state_finalizer(JSContext *ctx, void *opaque);
 
 void js_timers_init(JSContext *ctx);

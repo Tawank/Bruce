@@ -42,23 +42,23 @@ JSValue native_keyboard(JSContext *ctx, JSValue *this_val, int argc, JSValue *ar
 }
 
 JSValue native_getPrevPress(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    return JS_NewBool(PrevPress);
+    return JS_NewBool(check(PrevPress));
 }
 
 JSValue native_getSelPress(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    return JS_NewBool(SelPress);
+    return JS_NewBool(check(SelPress));
 }
 
 JSValue native_getEscPress(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    return JS_NewBool(EscPress);
+    return JS_NewBool(check(EscPress));
 }
 
 JSValue native_getNextPress(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    return JS_NewBool(NextPress);
+    return JS_NewBool(check(NextPress));
 }
 
 JSValue native_getAnyPress(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {
-    return JS_NewBool(AnyKeyPress);
+    return JS_NewBool(check(AnyKeyPress));
 }
 
 JSValue native_setLongPress(JSContext *ctx, JSValue *this_val, int argc, JSValue *argv) {

@@ -61,7 +61,7 @@ extern XPowersPPM PPM;
 extern XPowersPPM PPM;
 #endif
 
-extern uint8_t interpreter_state; // 0 - background, 1 - waiting for foreground, 2 - foreground
+extern int8_t interpreter_state; // -1 - stopped, 0 - background, 1 - waiting for foreground, 2 - foreground
 
 extern BruceConfig bruceConfig;
 extern BruceConfigPins bruceConfigPins;

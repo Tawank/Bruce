@@ -510,6 +510,17 @@ static const JSPropDef js_wifi[] = {
 
 const JSClassDef js_wifi_obj = JS_OBJECT_DEF("WiFi", js_wifi);
 
+/* Runtime module */
+static const JSPropDef js_runtime[] = {
+    JS_CFUNC_DEF("toBackground", 0, native_runtimeToBackground),
+    JS_CFUNC_DEF("toForeground", 0, native_runtimeToForeground),
+    JS_CFUNC_DEF("isForeground", 0, native_runtimeIsForeground),
+    JS_CFUNC_DEF("main", 1, native_runtimeMain),
+    JS_PROP_END,
+};
+
+const JSClassDef js_runtime_obj = JS_OBJECT_DEF("Runtime", js_runtime);
+
 /* Display module */
 static const JSPropDef js_display[] = {
     JS_CFUNC_DEF("color", 4, native_color),
@@ -715,6 +726,7 @@ static const JSPropDef js_global_object[] = {
     JS_PROP_CLASS_DEF("ir", &js_ir_obj),
     JS_PROP_CLASS_DEF("keyboard", &js_keyboard_obj),
     JS_PROP_CLASS_DEF("notification", &js_notification_obj),
+    JS_PROP_CLASS_DEF("runtime", &js_runtime_obj),
     JS_PROP_CLASS_DEF("serial", &js_serial_obj),
     JS_PROP_CLASS_DEF("storage", &js_storage_obj),
     JS_PROP_CLASS_DEF("subghz", &js_subghz_obj),
