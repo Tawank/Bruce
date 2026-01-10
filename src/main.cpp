@@ -460,7 +460,7 @@ void setup() {
     }
 #endif
     //  start a task to handle serial commands while the webui is running
-    startSerialCommandsHandlerTask();
+    startSerialCommandsHandlerTask(true);
 
     wakeUpScreen();
     if (bruceConfig.startupApp != "" && !startupApp.startApp(bruceConfig.startupApp)) {

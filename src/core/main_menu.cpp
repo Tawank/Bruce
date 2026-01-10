@@ -40,9 +40,9 @@ MainMenu::~MainMenu() {}
 
 void MainMenu::begin(void) {
     returnToMenu = false;
-    options = {};
+    options.clear();
 
-    std::vector<String> l = bruceConfig.disabledMenus;
+    std::vector<String> &l = bruceConfig.disabledMenus;
     for (int i = 0; i < _totalItems; i++) {
         String itemName = _menuItems[i]->getName();
         if (find(l.begin(), l.end(), itemName) == l.end()) { // If menu item is not disabled
