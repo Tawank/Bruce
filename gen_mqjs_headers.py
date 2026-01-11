@@ -39,6 +39,7 @@ INCLUDES = [
     'ir_js',
     'keyboard_js',
     'math_js',
+    'mic_js',
     'notification_js',
     'runtime_js',
     'serial_js',

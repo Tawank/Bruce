@@ -510,6 +510,14 @@ static const JSPropDef js_wifi[] = {
 
 const JSClassDef js_wifi_obj = JS_OBJECT_DEF("WiFi", js_wifi);
 
+/* Mic module */
+static const JSPropDef js_mic[] = {
+    JS_CFUNC_DEF("recordWav", 2, native_micRecordWav),
+    JS_PROP_END,
+};
+
+const JSClassDef js_mic_obj = JS_OBJECT_DEF("Mic", js_mic);
+
 /* Runtime module */
 static const JSPropDef js_runtime[] = {
     JS_CFUNC_DEF("toBackground", 0, native_runtimeToBackground),
@@ -726,6 +734,7 @@ static const JSPropDef js_global_object[] = {
     JS_PROP_CLASS_DEF("ir", &js_ir_obj),
     JS_PROP_CLASS_DEF("keyboard", &js_keyboard_obj),
     JS_PROP_CLASS_DEF("notification", &js_notification_obj),
+    JS_PROP_CLASS_DEF("mic", &js_mic_obj),
     JS_PROP_CLASS_DEF("runtime", &js_runtime_obj),
     JS_PROP_CLASS_DEF("serial", &js_serial_obj),
     JS_PROP_CLASS_DEF("storage", &js_storage_obj),
