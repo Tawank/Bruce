@@ -1,8 +1,8 @@
 #if !defined(LITE_VERSION) && !defined(DISABLE_INTERPRETER)
 #include "mic_js.h"
 
-#include "helpers_js.h"
 #include "core/sd_functions.h"
+#include "helpers_js.h"
 #include "modules/others/mic.h"
 
 // mic.recordWav(pathOrPathObj?, options?)
@@ -36,9 +36,7 @@ JSValue native_micRecordWav(JSContext *ctx, JSValue *this_val, int argc, JSValue
         }
 
         JSValue stopVal = JS_GetPropertyStr(ctx, argv[1], "stopOnSel");
-        if (JS_IsBool(stopVal)) {
-            stopOnSel = JS_ToBool(ctx, stopVal);
-        }
+        if (JS_IsBool(stopVal)) { stopOnSel = JS_ToBool(ctx, stopVal); }
     }
 
     // Choose FS if not specified
@@ -71,5 +69,3 @@ JSValue native_micRecordWav(JSContext *ctx, JSValue *this_val, int argc, JSValue
 }
 
 #endif
-
-

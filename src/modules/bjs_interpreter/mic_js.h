@@ -12,5 +12,3 @@ JSValue native_micRecordWav(JSContext *ctx, JSValue *this_val, int argc, JSValue
 
 #endif
 #endif
-
-
