@@ -247,6 +247,8 @@ void run_timers(JSContext *ctx) {
                         return;
                     }
 
+                    if (th->main) { interpreter_state = 0; }
+
                     // If interval callback threw, state may still be allocated; keep going.
                     min_delay = 0;
                     break;

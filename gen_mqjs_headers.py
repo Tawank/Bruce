@@ -122,21 +122,30 @@ def generate_headers():
     if not needs_rebuild():
         return
 
-    # Build the generator as a native host executable. The output headers are
-    # still forced to 32-bit target format via the generator's `-m32` flag.
-    subprocess.check_call([HOST_CC, *CFLAGS, "-o", GEN, *SRC])
+    try:
+        # Build the generator as a native host executable. The output headers are
+        # still forced to 32-bit target format via the generator's `-m32` flag.
+        subprocess.check_call([HOST_CC, *CFLAGS, "-o", GEN, *SRC])
 
-    print("gen_mqjs_headers.py Generating QuickJS headers for 32-bit targets")
+        print("gen_mqjs_headers.py Generating QuickJS headers for 32-bit targets")
 
-    with open(os.path.join(BJS_INTERPRETER_PATH, "mqjs_stdlib.h"), "w") as f:
-        result = subprocess.run([GEN, "-m32"], capture_output=True, text=True, check=True)
-        for line in INCLUDES:
-            f.write(f'#include "{line}.h"\n')
-        f.write("\n")
-        f.write(result.stdout)
+        with open(os.path.join(BJS_INTERPRETER_PATH, "mqjs_stdlib.h"), "w") as f:
+            result = subprocess.run([GEN, "-m32"], capture_output=True, text=True, check=True)
+            for line in INCLUDES:
+                f.write(f'#include "{line}.h"\n')
+            f.write("\n")
+            f.write(result.stdout)
 
-    with open(os.path.join(BUILD_DIR, "mquickjs_atom.h"), "w") as f:
-        subprocess.check_call([GEN, "-a", "-m32"], stdout=f)
+        with open(os.path.join(BUILD_DIR, "mquickjs_atom.h"), "w") as f:
+            subprocess.check_call([GEN, "-a", "-m32"], stdout=f)
+
+    except Exception as e:
+        print("\nError generating MicroQuickJS headers (gen_mqjs_headers.py).")
+        print("This error occurs because the mqjs_stdlib.c file was modified.")
+        print("If you want to make changes to this file, you need to install build-essential tools and ensure that gcc is available.")
+        print("Alternatively, you can build using Docker by running:")
+        print("  docker compose run platformio_build\n")
+        raise e
 
     write_build_stamp()
 
