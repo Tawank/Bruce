@@ -77,13 +77,12 @@ def compute_signature():
     parts = []
     parts.append("v=3")
     parts.append(f"PIOENV={PIOENV}")
-    parts.append(f"build_flags={_normalize_option_value(_project_option('build_flags'))}")
-    parts.append(f"build_src_flags={_normalize_option_value(_project_option('build_src_flags'))}")
     parts.append(f"watch_sha256={sha256_file(WATCH_FILE)}")
 
     mqjs_build_c = os.path.join(MQJS_PATH, "mquickjs_build.c")
-    if os.path.exists(mqjs_build_c):
-        parts.append(f"mquickjs_build_sha256={sha256_file(mqjs_build_c)}")
+    parts.append(f"mquickjs_build_sha256={sha256_file(mqjs_build_c)}")
+    mqjs_build_h = os.path.join(MQJS_PATH, "mquickjs_build.h")
+    parts.append(f"mquickjs_build_sha256={sha256_file(mqjs_build_h)}")
 
     h = hashlib.sha256()
     h.update("\n".join(parts).encode("utf-8"))
